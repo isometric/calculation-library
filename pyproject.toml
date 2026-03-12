@@ -1,0 +1,52 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build"]
+
+[dependency-groups]
+dev = [
+  "gitpython==3.1.46",
+  "more-itertools==10.8.0",
+  "pandas-stubs==3.0.0.260204",
+  "pytest==9.0.2",
+  "ruff==0.15.5",
+  "scipy-stubs==1.17.1.1",
+  "tomlkit==0.14.0",
+  "typer==0.24.1",
+]
+
+[project]
+dependencies = [
+  "geopandas==1.1.3",
+  "numpy==2.4.2",
+  "pandas==2.3.3",
+  "scipy==1.17.1",
+  "shapely==2.1.2",
+]
+license = "PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
+name = "isometric-calculation-library"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.15.0"
+
+[tool.pyright]
+extends = "../../services/backend/base_configs/pyrightconfig.json"
+reportImportCycles = "error" # this makes it easier to inline hidden imports, by topologically sorting a DAG of modules
+
+[tool.ruff]
+extend = "../../services/backend/base_configs/ruff.toml"
+
+[tool.ruff.lint]
+extend-select = ["CPY001"]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm Noncommercial 1\.0\.0\n# https://polyformproject\.org/licenses/noncommercial/1\.0\.0/\n'
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["S101"]
+
+[tool.uv.build-backend]
+module-root = ""
+# keep in sync with .github/paths/calculation-library-package-scope.env
+source-exclude = ["/isometric_calculation_library/hidden"]
+wheel-exclude = ["/isometric_calculation_library/hidden"]
