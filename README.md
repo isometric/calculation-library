@@ -1,0 +1,54 @@
+# Isometric Calculation Library
+
+Shared quantification functions used by [Isometric](https://isometric.com) to calculate carbon dioxide removal (CDR) from supplier data. The library powers the code calculations behind Isometric's verification reports, giving suppliers full transparency into how their removals are quantified.
+
+## Installation
+
+Requires Python 3.13+.
+
+### Using [uv](https://docs.astral.sh/uv/) (recommended)
+
+Manage the dependency in a [uv project](https://docs.astral.sh/uv/concepts/projects/):
+
+```bash
+uv add isometric-calculation-library
+```
+
+Or [install](https://docs.astral.sh/uv/pip/packages/) with [uv pip](https://docs.astral.sh/uv/pip/) in a [virtual environment](https://docs.astral.sh/uv/pip/environments/):
+
+```bash
+uv venv
+uv pip install isometric-calculation-library
+```
+
+### Using [Poetry](https://python-poetry.org/)
+
+```bash
+poetry add isometric-calculation-library
+```
+
+### Using pip
+
+We recommend using a [virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/):
+
+```bash
+pip install isometric-calculation-library
+```
+
+## What's inside
+
+The library contains reusable building blocks for CDR quantification, organised by removal pathway under `calculations/`.
+
+Public modules are currently being populated.
+
+## Running tests
+
+Assumes you are using [uv](https://docs.astral.sh/uv/) to manage the project.
+
+```bash
+uv run pytest
+```
+
+## License
+
+This project is source-available under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/), with additional permissions granted in the [LICENSE](LICENSE) file.
