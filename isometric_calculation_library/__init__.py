@@ -5,8 +5,13 @@
 from collections.abc import Callable
 from typing import NewType
 
-__version__ = "0.17.0"
-"""Version format: M.R.0 where M is the major version, R is a revision number incrementing on each release, and the patch number is always 0."""
+__version__ = "0.17.1"
+"""Version format: MAJOR.MINOR.PATCH.
+
+The minor version is normally incremented for changes to the calculations themselves, the patch
+version for dependency updates and non-substantive changes to the internals of the library. The
+major version is not normally incremented.
+"""
 
 ModelKey = NewType("ModelKey", str)
 
