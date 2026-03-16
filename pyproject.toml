@@ -9,7 +9,7 @@ dev = [
   "pandas-stubs==3.0.0.260204",
   "pytest==9.0.2",
   "ruff==0.15.6",
-  "scipy-stubs==1.17.1.1",
+  "scipy-stubs==1.17.1.2",
   "tomlkit==0.14.0",
   "typer==0.24.1",
 ]
@@ -27,7 +27,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.17.1"
+version = "0.17.2"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
