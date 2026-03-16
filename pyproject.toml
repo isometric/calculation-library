@@ -10,6 +10,7 @@ dev = [
   "pytest==9.0.2",
   "ruff==0.15.6",
   "scipy-stubs==1.17.1.2",
+  "toml-sort==0.24.3",
   "tomlkit==0.14.0",
   "typer==0.24.1",
 ]
@@ -27,7 +28,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.17.2"
+version = "0.17.3"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -44,6 +45,13 @@ notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm
 
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["S101"]
+
+[tool.tomlsort]
+no_sort_tables = true
+sort_inline_tables = true
+sort_table_keys = true
+spaces_indent_inline_array = 2
+trailing_comma_inline_array = true
 
 [tool.uv.build-backend]
 module-root = ""
