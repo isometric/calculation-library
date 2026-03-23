@@ -14,10 +14,12 @@ import geopandas
 import numpy  # noqa: ICN001
 import pandas  # noqa: ICN001
 import shapely
+import xarray
 
 __all__ = [
     "geopandas",
     "numpy",
     "pandas",
     "shapely",
+    "xarray",
 ]
