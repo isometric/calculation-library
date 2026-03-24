@@ -4,13 +4,15 @@
 
 """One-tailed significance test for enhanced weathering signal."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 from scipy import stats
 
-from ..types import Np1DArray
+from ..types import Np1DArray, mass_fraction_column_name
 from ._normality import check_normality
 
 
@@ -112,3 +114,62 @@ def check_weathering_significance(
         n_post_application=len(post_application_concentrations_mg_kg),
         n_end_of_reporting_period=len(end_of_reporting_period_concentrations_mg_kg),
     )
+
+
+def run_significance_tests(
+    *,
+    treatment_baseline: pd.DataFrame,
+    treatment_reporting_period: pd.DataFrame,
+    feedstock_samples: pd.DataFrame,
+    bulk_density_kg_m3: float,
+    application_rate_kg_ha: float,
+    elements: Sequence[str],
+    sampling_depth_cm: float,
+) -> pd.DataFrame:
+    """Run per-element weathering significance tests and return as a DataFrame.
+
+    For each element, infers post-application concentrations from the baseline
+    using the mixing formula, then tests whether the end-of-reporting-period
+    concentrations are significantly lower (indicating weathering).
+
+    Args:
+        treatment_baseline: Baseline treatment soil samples.
+        treatment_reporting_period: End-of-reporting-period treatment soil samples.
+        feedstock_samples: Feedstock geochemistry samples.
+        bulk_density_kg_m3: Mean bulk density in kg/m3.
+        application_rate_kg_ha: Known feedstock application rate in kg/ha.
+        elements: Element names to test (e.g. ``["Ca", "Mg"]``).
+        sampling_depth_cm: Sampling depth in cm.
+    """
+    results = dict[str, SignificanceTestResult]()
+    for element in elements:
+        col = mass_fraction_column_name(element)
+        feedstock_mean = float(feedstock_samples[col].dropna().mean())
+
+        post_app = infer_post_application_concentrations(
+            baseline_concentrations_mg_kg=treatment_baseline[col].dropna().to_numpy(),
+            feedstock_concentration_mg_kg=feedstock_mean,
+            application_rate_kg_ha=application_rate_kg_ha,
+            bulk_density_kg_m3=bulk_density_kg_m3,
+            depth_cm=sampling_depth_cm,
+        )
+
+        results[element] = check_weathering_significance(
+            post_application_concentrations_mg_kg=post_app,
+            end_of_reporting_period_concentrations_mg_kg=(
+                treatment_reporting_period[col].dropna().to_numpy()
+            ),
+        )
+
+    return pd.DataFrame([
+        {
+            "cation": element,
+            "test_name": sig_result.test_name,
+            "statistic": sig_result.statistic,
+            "p_value": sig_result.p_value,
+            "significant": sig_result.significant,
+            "n_post_application": sig_result.n_post_application,
+            "n_end_of_reporting_period": sig_result.n_end_of_reporting_period,
+        }
+        for element, sig_result in results.items()
+    ])

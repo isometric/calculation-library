@@ -49,20 +49,6 @@ def compute_post_application_concentration(
     )
 
 
-def compute_control_correction_ratio(
-    *,
-    control_baseline_mg_kg: Np1DArray[np.floating],
-    control_end_of_reporting_period_mg_kg: Np1DArray[np.floating],
-) -> Np1DArray[np.floating]:
-    """Compute ratio-based control correction from control plot cation concentrations.
-
-    cc = C_rp_ctrl / C_bl_ctrl
-
-    No clamping is applied so that full uncertainty propagates through the bootstrap.
-    """
-    return control_end_of_reporting_period_mg_kg / control_baseline_mg_kg
-
-
 def compute_fraction_dissolved(
     *,
     feedstock_soil_mass_ratio: Np1DArray[np.floating],
@@ -84,47 +70,6 @@ def compute_fraction_dissolved(
     )
 
     return np.where(np.isinf(fraction_dissolved), np.nan, fraction_dissolved)
-
-
-def calculate_tracer_resolvability(
-    *,
-    soil_mass_kg: float,
-    feedstock_mass_kg: float,
-    feedstock_tracer_mg_kg: Np1DArray[np.floating],
-    baseline_treatment_tracer_mg_kg: Np1DArray[np.floating],
-) -> float:
-    """Calculate resolvability index for an immobile tracer element.
-
-    Measures how distinguishable the tracer signal is from background noise.
-    Higher values indicate better resolvability.
-
-    Uses standard errors (std / sqrt(n)) for both feedstock and soil
-    uncertainties.
-
-    Args:
-        soil_mass_kg: Mass of soil in the sampling volume.
-        feedstock_mass_kg: Mass of feedstock applied.
-        feedstock_tracer_mg_kg: Feedstock tracer concentrations
-            (one value per sample).
-        baseline_treatment_tracer_mg_kg: Baseline treatment soil tracer
-            concentrations (one value per sample).
-    """
-    feedstock_mass_fraction = feedstock_mass_kg / (feedstock_mass_kg + soil_mass_kg)
-    mean_feedstock_tracer = float(np.mean(feedstock_tracer_mg_kg))
-    mean_soil_tracer = float(np.mean(baseline_treatment_tracer_mg_kg))
-    feedstock_tracer_standard_error = float(
-        np.std(feedstock_tracer_mg_kg) / np.sqrt(len(feedstock_tracer_mg_kg)),
-    )
-    soil_tracer_standard_error = float(
-        np.std(baseline_treatment_tracer_mg_kg) / np.sqrt(len(baseline_treatment_tracer_mg_kg)),
-    )
-
-    signal = abs(feedstock_mass_fraction * (mean_feedstock_tracer - mean_soil_tracer))
-    noise = (
-        2 * soil_tracer_standard_error
-        + (feedstock_tracer_standard_error - soil_tracer_standard_error) * feedstock_mass_fraction
-    )
-    return signal / noise
 
 
 def compute_application_rate_from_tracer(

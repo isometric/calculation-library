@@ -3,12 +3,14 @@
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from ..weathering_signal import (
     SignificanceTestResult,
     check_weathering_significance,
     infer_post_application_concentrations,
+    run_significance_tests,
 )
 
 
@@ -139,3 +141,41 @@ def test_significance_custom_significance_level() -> None:
     assert result_strict.significance_level == pytest.approx(0.001)
     assert result_loose.significant
     assert not result_strict.significant
+
+
+# ---------------------------------------------------------------------------
+# run_significance_tests
+# ---------------------------------------------------------------------------
+
+
+def test_run_significance_tests_returns_one_row_per_element() -> None:
+    """Result DataFrame should have one row per element with p-values in [0, 1]."""
+    rng = np.random.default_rng(42)
+    n = 30
+
+    treat_bl = pd.DataFrame({
+        "mass_fraction_ca": rng.normal(200, 10, size=n),
+        "mass_fraction_mg": rng.normal(150, 8, size=n),
+    })
+    treat_rp = pd.DataFrame({
+        "mass_fraction_ca": rng.normal(180, 10, size=n),
+        "mass_fraction_mg": rng.normal(135, 8, size=n),
+    })
+    feedstock = pd.DataFrame({
+        "mass_fraction_ca": rng.normal(50_000, 2000, size=10),
+        "mass_fraction_mg": rng.normal(30_000, 1500, size=10),
+    })
+
+    result = run_significance_tests(
+        treatment_baseline=treat_bl,
+        treatment_reporting_period=treat_rp,
+        feedstock_samples=feedstock,
+        bulk_density_kg_m3=1200.0,
+        application_rate_kg_ha=15_000.0,
+        elements=["Ca", "Mg"],
+        sampling_depth_cm=30.0,
+    )
+
+    assert set(result["cation"]) == {"Ca", "Mg"}
+    assert len(result) == 2
+    assert all(result["p_value"].between(0, 1))

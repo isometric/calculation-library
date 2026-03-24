@@ -8,7 +8,6 @@ from more_itertools import one
 
 from isometric_calculation_library.enhanced_weathering.utils.tracer import (
     compute_application_rate_from_tracer,
-    compute_control_correction_ratio,
     compute_fraction_dissolved,
     compute_mass_ratio_from_immobile_tracer,
     compute_post_application_concentration,
@@ -58,15 +57,6 @@ def test_post_application_no_feedstock_equals_baseline() -> None:
         feedstock_mg_kg=5000.0,
     )
     assert result == pytest.approx([100.0])
-
-
-def test_control_correction_ratio() -> None:
-    """cc = C_rp_ctrl / C_bl_ctrl."""
-    result = compute_control_correction_ratio(
-        control_baseline_mg_kg=np.array([100.0, 200.0]),
-        control_end_of_reporting_period_mg_kg=np.array([90.0, 210.0]),
-    )
-    np.testing.assert_allclose(result, [0.9, 1.05])
 
 
 def test_fraction_dissolved_full_dissolution() -> None:

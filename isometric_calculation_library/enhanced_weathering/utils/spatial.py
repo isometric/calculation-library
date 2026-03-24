@@ -3,13 +3,26 @@
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
 from collections.abc import Mapping, Sequence
-from typing import Literal
+from typing import Literal, NamedTuple
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
 PlotType = Literal["control", "treatment", "deployment"]
+
+
+class SplitByPlotTypeResult(NamedTuple):
+    """Result of assigning samples to plot types and splitting by type."""
+
+    splits: Mapping[PlotType, tuple[pd.DataFrame, pd.DataFrame]]
+    """Per-plot-type ``(baseline, reporting_period)`` DataFrames."""
+
+    n_baseline_unassigned: int
+    """Number of baseline samples that fell outside all plot polygons."""
+
+    n_reporting_period_unassigned: int
+    """Number of reporting-period samples that fell outside all plot polygons."""
 
 
 def assign_area_type(
@@ -49,6 +62,48 @@ def assign_area_type(
     samples = samples.copy()
     samples[output_column] = joined["Type"].str.lower().to_numpy()
     return samples
+
+
+def assign_and_split_by_plot_type(
+    baseline_samples: pd.DataFrame,
+    reporting_period_samples: pd.DataFrame,
+    plots: gpd.GeoDataFrame,
+) -> SplitByPlotTypeResult:
+    """Assign area types via spatial join and split into per-plot-type pairs.
+
+    Samples that don't fall within any plot polygon are dropped.  The
+    number of dropped samples per period is reported in the result so
+    that callers can surface it in data reports.
+
+    Args:
+        baseline_samples: Baseline soil samples with ``latitude`` and
+            ``longitude`` columns.
+        reporting_period_samples: End-of-reporting-period soil samples with
+            the same columns.
+        plots: Plot geometries with ``Type`` and ``Geometry`` columns.
+    """
+    bl_assigned = assign_area_type(baseline_samples, plots)
+    rp_assigned = assign_area_type(reporting_period_samples, plots)
+
+    n_bl_unassigned = int(bl_assigned["plot_type"].isna().sum())
+    n_rp_unassigned = int(rp_assigned["plot_type"].isna().sum())
+
+    bl_clean = bl_assigned.dropna(subset=["plot_type"])
+    rp_clean = rp_assigned.dropna(subset=["plot_type"])
+
+    plot_types = set(bl_clean["plot_type"].unique()) | set(rp_clean["plot_type"].unique())
+
+    splits = dict[PlotType, tuple[pd.DataFrame, pd.DataFrame]]()
+    for plot_type in sorted(plot_types):
+        splits[plot_type] = (
+            bl_clean[bl_clean["plot_type"] == plot_type],
+            rp_clean[rp_clean["plot_type"] == plot_type],
+        )
+    return SplitByPlotTypeResult(
+        splits=splits,
+        n_baseline_unassigned=n_bl_unassigned,
+        n_reporting_period_unassigned=n_rp_unassigned,
+    )
 
 
 def calculate_area_hectares_by_plot_type(
