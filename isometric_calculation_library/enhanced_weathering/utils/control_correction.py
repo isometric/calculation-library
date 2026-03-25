@@ -17,6 +17,7 @@ from isometric_calculation_library.enhanced_weathering.utils.types import (
     Np2DArray,
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils.elements import ElementSymbol
 
 
 def compute_control_correction_ratio(
@@ -37,8 +38,8 @@ def bootstrap_control_correction_ratios(
     *,
     ctrl_paired: pd.DataFrame,
     resampled_control_locations: Np2DArray[np.intp],
-    elements: Sequence[str],
-) -> Mapping[str, Np1DArray[np.floating]]:
+    elements: Sequence[ElementSymbol],
+) -> Mapping[ElementSymbol, Np1DArray[np.floating]]:
     """Bootstrap control correction ratio distributions for each element.
 
     Bootstraps cation concentrations at control locations across both periods
@@ -53,7 +54,7 @@ def bootstrap_control_correction_ratios(
             ``(n_runs, n_locations)`` from ``generate_bootstrap_location_indices``.
         elements: Element names (e.g. ``["Ca", "Mg"]``).
     """
-    ratios = dict[str, Np1DArray[np.floating]]()
+    ratios = dict[ElementSymbol, Np1DArray[np.floating]]()
     for element in elements:
         col = mass_fraction_column_name(element)
         ctrl_bl_boot = compute_resampled_means_from_indices(

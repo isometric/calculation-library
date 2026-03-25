@@ -7,20 +7,12 @@ from typing import Literal
 import numpy as np
 
 from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
+from isometric_calculation_library.utils.elements import atomic_weight
 
 Cation = Literal["Ca", "Mg"]
 
-MOLAR_MASS_CO2 = 44.01
+MOLAR_MASS_CO2 = atomic_weight("C") + 2 * atomic_weight("O")
 """Molar mass of CO2 in g/mol."""
-
-
-def _cation_to_molar_mass_g_per_mol(cation: Cation) -> float:
-    """Get molar mass for a given cation."""
-    match cation:
-        case "Ca":
-            return 40.08
-        case "Mg":
-            return 24.3
 
 
 def _cation_to_charge(cation: Cation) -> int:
@@ -67,6 +59,6 @@ def convert_cation_kg_to_co2_kg(
     corresponds to one mole of CO2 captured per unit charge via carbonate
     weathering.
     """
-    molar_mass = _cation_to_molar_mass_g_per_mol(cation)
+    molar_mass = atomic_weight(cation)
     charge = _cation_to_charge(cation)
     return cation_kg * charge * MOLAR_MASS_CO2 / molar_mass

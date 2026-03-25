@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from isometric_calculation_library.enhanced_weathering.utils.conversions import (
-    MOLAR_MASS_CO2,
     convert_cation_kg_to_co2_kg,
     convert_kg_ha_to_mg_kg,
     convert_mg_kg_to_kg_ha,
@@ -53,22 +52,22 @@ def test_mg_kg_and_kg_ha_are_inverses() -> None:
 
 
 def test_convert_ca_kg_to_co2_kg() -> None:
-    """1 kg Ca => charge * M_CO2 / M_Ca kg CO2 = 2 * 44.01 / 40.08."""
+    """1 kg Ca => charge * M_CO2 / M_Ca kg CO2 = 2 * 44.00955 / 40.078."""
     result = convert_cation_kg_to_co2_kg(
         cation_kg=np.array([1.0]),
         cation="Ca",
     )
-    expected = 2 * MOLAR_MASS_CO2 / 40.08
+    expected = 2 * 44.00955 / 40.078
     assert result == pytest.approx([expected])
 
 
 def test_convert_mg_kg_to_co2_kg() -> None:
-    """1 kg Mg => charge * M_CO2 / M_Mg kg CO2 = 2 * 44.01 / 24.3."""
+    """1 kg Mg => charge * M_CO2 / M_Mg kg CO2 = 2 * 44.00955 / 24.3051."""
     result = convert_cation_kg_to_co2_kg(
         cation_kg=np.array([1.0]),
         cation="Mg",
     )
-    expected = 2 * MOLAR_MASS_CO2 / 24.3
+    expected = 2 * 44.00955 / 24.3051
     assert result == pytest.approx([expected])
 
 
@@ -108,7 +107,7 @@ def test_convert_cation_kg_to_co2_kg_vector() -> None:
         cation_kg=np.array([1.0, 2.0, 5.0]),
         cation="Ca",
     )
-    expected = np.array([1.0, 2.0, 5.0]) * 2 * MOLAR_MASS_CO2 / 40.08
+    expected = np.array([1.0, 2.0, 5.0]) * 2 * 44.00955 / 40.078
     np.testing.assert_allclose(result, expected)
 
 

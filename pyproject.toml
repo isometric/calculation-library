@@ -5,6 +5,7 @@ requires = ["uv_build"]
 [dependency-groups]
 dev = [
   "gitpython==3.1.46",
+  "molmass==2026.1.8",
   "more-itertools==10.8.0",
   "pandas-stubs==3.0.0.260204",
   "pytest==9.0.2",
@@ -29,7 +30,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.19.1"
+version = "0.20.0"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -40,6 +41,9 @@ extend = "../../services/backend/base_configs/ruff.toml"
 
 [tool.ruff.lint]
 extend-select = ["CPY001"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm Noncommercial 1\.0\.0\n# https://polyformproject\.org/licenses/noncommercial/1\.0\.0/\n'

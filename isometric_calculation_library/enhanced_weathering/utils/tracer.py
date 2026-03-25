@@ -2,21 +2,14 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
-from enum import StrEnum, auto
+from typing import Literal
 
 import numpy as np
 
 from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
 
-
-class ImmobileTracer(StrEnum):
-    """Immobile tracer elements used for feedstock-soil mass balance."""
-
-    Zr = auto()
-    """Zirconium."""
-
-    Ti = auto()
-    """Titanium."""
+type ImmobileTracer = Literal["Zr", "Ti"]
+"""Immobile tracer elements used for feedstock-soil mass balance."""
 
 
 def compute_mass_ratio_from_immobile_tracer(

@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from isometric_calculation_library.utils.elements import ElementSymbol
+
 from ..types import Np1DArray, mass_fraction_column_name
 from ._normality import check_normality
 
@@ -123,7 +125,7 @@ def run_significance_tests(
     feedstock_samples: pd.DataFrame,
     bulk_density_kg_m3: float,
     application_rate_kg_ha: float,
-    elements: Sequence[str],
+    elements: Sequence[ElementSymbol],
     sampling_depth_cm: float,
 ) -> pd.DataFrame:
     """Run per-element weathering significance tests and return as a DataFrame.
@@ -141,7 +143,7 @@ def run_significance_tests(
         elements: Element names to test (e.g. ``["Ca", "Mg"]``).
         sampling_depth_cm: Sampling depth in cm.
     """
-    results = dict[str, SignificanceTestResult]()
+    results = dict[ElementSymbol, SignificanceTestResult]()
     for element in elements:
         col = mass_fraction_column_name(element)
         feedstock_mean = float(feedstock_samples[col].dropna().mean())

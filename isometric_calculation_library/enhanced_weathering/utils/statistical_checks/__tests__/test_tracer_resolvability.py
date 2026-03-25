@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 
-from ...tracer import ImmobileTracer
 from ..tracer_resolvability import build_tracer_resolvability_df
 
 
@@ -24,7 +23,7 @@ def test_build_tracer_resolvability_df_structure() -> None:
         bulk_density_values=bulk_density,
         area_ha=10.0,
         application_rate_kg_ha=15_000.0,
-        tracer=ImmobileTracer.Ti,
+        tracer="Ti",
         sampling_depth_cm=30.0,
     )
 
