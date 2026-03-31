@@ -2,7 +2,7 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -136,6 +136,29 @@ def compute_resampled_means_from_indices(
         indices: Bootstrap location indices of shape (n_runs, n_locations).
     """
     return np.mean(values[indices], axis=1)
+
+
+def summarize_distributions(
+    distributions: Mapping[str, Np1DArray[np.floating]],
+) -> pd.DataFrame:
+    """Summarize bootstrap distributions with standard percentile statistics.
+
+    Args:
+        distributions: Mapping from distribution name to bootstrap samples.
+    """
+    return pd.DataFrame([
+        {
+            "distribution_name": name,
+            "mean": float(np.nanmean(values)),
+            "std": float(np.nanstd(values)),
+            "p5": float(np.nanpercentile(values, 5)),
+            "p16": float(np.nanpercentile(values, 16)),
+            "median": float(np.nanmedian(values)),
+            "p84": float(np.nanpercentile(values, 84)),
+            "p95": float(np.nanpercentile(values, 95)),
+        }
+        for name, values in distributions.items()
+    ])
 
 
 def resample_by_group(
