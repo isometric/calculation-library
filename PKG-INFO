@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: isometric-calculation-library
-Version: 0.20.6
+Version: 0.20.7
 License-Expression: PolyForm-Noncommercial-1.0.0
 License-File: LICENSE
 Requires-Dist: geopandas==1.1.3
