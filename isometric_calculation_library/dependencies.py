@@ -13,13 +13,19 @@ all its dependencies.
 import geopandas
 import numpy  # noqa: ICN001
 import pandas  # noqa: ICN001
+import rasterio
 import shapely
+import statsmodels
+import statsmodels.formula.api as statsmodels_formula_api
 import xarray
 
 __all__ = [
     "geopandas",
     "numpy",
     "pandas",
+    "rasterio",
     "shapely",
+    "statsmodels",
+    "statsmodels_formula_api",
     "xarray",
 ]
