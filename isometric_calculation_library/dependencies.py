@@ -14,6 +14,7 @@ import geopandas
 import numpy  # noqa: ICN001
 import pandas  # noqa: ICN001
 import rasterio
+import scipy
 import shapely
 import statsmodels
 import statsmodels.formula.api as statsmodels_formula_api
@@ -24,6 +25,7 @@ __all__ = [
     "numpy",
     "pandas",
     "rasterio",
+    "scipy",
     "shapely",
     "statsmodels",
     "statsmodels_formula_api",
