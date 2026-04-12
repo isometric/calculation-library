@@ -2,7 +2,14 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
-"""One-tailed significance test for enhanced weathering signal."""
+"""One-tailed significance tests for enhanced weathering signal.
+
+Provides both unpaired (independent-sample) and paired (matched-location)
+variants.  The paired variant should be preferred when baseline and
+reporting-period samples can be matched by spatial location, because it
+controls for between-location variance and has more power to detect small
+weathering signals.
+"""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -22,7 +29,7 @@ from ._normality import check_normality
 class SignificanceTestResult:
     """Result of a one-tailed significance test for weathering signal."""
 
-    test_name: Literal["welch_t_test", "mann_whitney_u"]
+    test_name: Literal["welch_t_test", "mann_whitney_u", "paired_t_test", "wilcoxon_signed_rank"]
     """Name of the statistical test used."""
 
     statistic: float
@@ -115,6 +122,75 @@ def check_weathering_significance(
         significance_level=significance_level,
         n_post_application=len(post_application_concentrations_mg_kg),
         n_end_of_reporting_period=len(end_of_reporting_period_concentrations_mg_kg),
+    )
+
+
+def check_weathering_significance_paired(
+    *,
+    post_application_concentrations_mg_kg: Np1DArray[np.floating],
+    end_of_reporting_period_concentrations_mg_kg: Np1DArray[np.floating],
+    significance_level: float = 0.05,
+) -> SignificanceTestResult:
+    """Paired test for a statistically significant decrease in cation concentration.
+
+    Like :func:`check_weathering_significance`, but for **matched** samples
+    (same spatial location at two time points).  This controls for
+    between-location variance, giving more statistical power when the
+    weathering signal is small relative to spatial variability.
+
+    H0: median(C_post - C_rp) <= 0 (no weathering).
+    H1: median(C_post - C_rp) > 0 (weathering occurred).
+
+    Uses a paired t-test if the *differences* pass Shapiro-Wilk normality,
+    otherwise Wilcoxon signed-rank.
+
+    Args:
+        post_application_concentrations_mg_kg: Post-application concentrations,
+            one per matched location.
+        end_of_reporting_period_concentrations_mg_kg: End-of-reporting-period
+            concentrations, same order/length as post-application.
+        significance_level: Significance level (default 0.05 per protocol).
+    """
+    if len(post_application_concentrations_mg_kg) != len(
+        end_of_reporting_period_concentrations_mg_kg,
+    ):
+        msg = (
+            "Paired test requires equal-length arrays "
+            f"(got {len(post_application_concentrations_mg_kg)} vs "
+            f"{len(end_of_reporting_period_concentrations_mg_kg)})"
+        )
+        raise ValueError(msg)
+
+    differences = (
+        post_application_concentrations_mg_kg - end_of_reporting_period_concentrations_mg_kg
+    )
+
+    if check_normality(differences):
+        result = stats.ttest_rel(
+            post_application_concentrations_mg_kg,
+            end_of_reporting_period_concentrations_mg_kg,
+            alternative="greater",
+        )
+        test_name: Literal["paired_t_test", "wilcoxon_signed_rank"] = "paired_t_test"
+    else:
+        result = stats.wilcoxon(
+            post_application_concentrations_mg_kg,
+            end_of_reporting_period_concentrations_mg_kg,
+            alternative="greater",
+        )
+        test_name = "wilcoxon_signed_rank"
+
+    p_value = float(result.pvalue)
+    n = len(post_application_concentrations_mg_kg)
+
+    return SignificanceTestResult(
+        test_name=test_name,
+        statistic=float(result.statistic),
+        p_value=p_value,
+        significant=p_value < significance_level,
+        significance_level=significance_level,
+        n_post_application=n,
+        n_end_of_reporting_period=n,
     )
 
 
