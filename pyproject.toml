@@ -32,7 +32,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.21.4"
+version = "0.21.5"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
