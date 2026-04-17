@@ -6,7 +6,7 @@ requires = ["uv_build"]
 dev = [
   "gitpython==3.1.46",
   "molmass==2026.1.8",
-  "more-itertools==11.0.1",
+  "more-itertools==11.0.2",
   "pandas-stubs==3.0.0.260204",
   "pytest==9.0.3",
   "ruff==0.15.10",
@@ -25,14 +25,14 @@ dependencies = [
   "scipy==1.17.1",
   "shapely==2.1.2",
   "statsmodels==0.14.6",
-  "xarray==2026.2.0",
+  "xarray==2026.4.0",
 ]
 license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.21.5"
+version = "0.21.7"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
