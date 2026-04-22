@@ -4,7 +4,7 @@ requires = ["uv_build"]
 
 [dependency-groups]
 dev = [
-  "gitpython==3.1.46",
+  "gitpython==3.1.47",
   "molmass==2026.1.8",
   "more-itertools==11.0.2",
   "pandas-stubs==3.0.0.260204",
@@ -32,7 +32,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.21.9"
+version = "0.21.10"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"

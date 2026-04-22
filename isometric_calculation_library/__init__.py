@@ -5,7 +5,7 @@
 from collections.abc import Callable
 from typing import NewType
 
-__version__ = "0.21.9"
+__version__ = "0.21.10"
 """Version format: MAJOR.MINOR.PATCH.
 
 The minor version is normally incremented for changes to the calculations themselves, the patch
