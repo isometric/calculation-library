@@ -4,7 +4,7 @@
 from typing import get_args
 
 import pytest
-from molmass import (  # noqa: TID251 - molmass is allowed as a test dependency, to verify production data
+from molmass.elements import (  # noqa: TID251 - molmass is allowed as a test dependency, to verify production data
     ELEMENTS,
 )
 
