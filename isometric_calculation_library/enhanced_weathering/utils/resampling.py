@@ -103,6 +103,8 @@ def generate_bootstrap_location_indices(
     rng: np.random.Generator,
     n_locations: int,
     n_runs: int,
+    *,
+    resample_size: int | None = None,
 ) -> np.ndarray:
     """Generate bootstrap resampling indices for location-level resampling.
 
@@ -112,14 +114,19 @@ def generate_bootstrap_location_indices(
 
     Args:
         rng: NumPy random generator.
-        n_locations: Number of locations to resample from.
+        n_locations: Number of locations to resample from (population size).
         n_runs: Number of bootstrap iterations.
+        resample_size: Number of locations to draw per replicate. Defaults to
+            ``n_locations`` (standard bootstrap). Set to ``n_eff`` when spatial
+            autocorrelation reduces effective sample size.
 
     Returns:
-        Integer array of shape (n_runs, n_locations) with values in
-        [0, n_locations).
+        Integer array of shape (n_runs, draw_size) with values in
+        [0, n_locations), where draw_size is ``resample_size`` or
+        ``n_locations``.
     """
-    return rng.integers(0, n_locations, size=(n_runs, n_locations))
+    draw_size = resample_size if resample_size is not None else n_locations
+    return rng.integers(0, n_locations, size=(n_runs, draw_size))
 
 
 def compute_resampled_means_from_indices(
@@ -153,6 +160,8 @@ def summarize_distributions(
             "std": float(np.nanstd(values)),
             "p5": float(np.nanpercentile(values, 5)),
             "p16": float(np.nanpercentile(values, 16)),
+            "p30": float(np.nanpercentile(values, 30)),
+            "p40": float(np.nanpercentile(values, 40)),
             "median": float(np.nanmedian(values)),
             "p84": float(np.nanpercentile(values, 84)),
             "p95": float(np.nanpercentile(values, 95)),

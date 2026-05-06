@@ -23,6 +23,8 @@ def test_summarize_distributions_columns_and_rows() -> None:
         "std",
         "p5",
         "p16",
+        "p30",
+        "p40",
         "median",
         "p84",
         "p95",
@@ -38,4 +40,6 @@ def test_summarize_distributions_values_are_consistent() -> None:
     result = summarize_distributions(distributions)
 
     row = result.iloc[0]
-    assert row["p5"] < row["p16"] < row["median"] < row["p84"] < row["p95"]
+    assert (
+        row["p5"] < row["p16"] < row["p30"] < row["p40"] < row["median"] < row["p84"] < row["p95"]
+    )
