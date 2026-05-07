@@ -24,33 +24,33 @@ def test_build_application_rate_check_columns() -> None:
         "soil_based_app_rate_p16_t_ha",
         "soil_based_app_rate_p84_t_ha",
         "soil_based_app_rate_p95_t_ha",
-        "known_within_3std",
+        "known_within_2std",
         "deviation_in_std",
     }
     assert set(result.columns) == expected_cols
     assert len(result) == 1
 
 
-def test_build_application_rate_check_within_3std() -> None:
-    """When actual rate matches bootstrap mean, it should be within 3 std."""
+def test_build_application_rate_check_within_2std() -> None:
+    """When actual rate matches bootstrap mean, it should be within 2 std."""
     boot = np.random.default_rng(42).normal(15_000, 500, size=10_000)
     result = build_application_rate_check(
         soil_based_application_rate_bootstrap_replicates_kg_ha=boot,
         known_application_rate_kg_ha=15_000.0,
     )
 
-    assert result["known_within_3std"].iloc[0]
+    assert result["known_within_2std"].iloc[0]
 
 
-def test_build_application_rate_check_outside_3std() -> None:
-    """When actual rate is far from bootstrap mean, it should be outside 3 std."""
+def test_build_application_rate_check_outside_2std() -> None:
+    """When actual rate is far from bootstrap mean, it should be outside 2 std."""
     boot = np.full(10_000, 15_000.0) + np.random.default_rng(42).normal(0, 100, size=10_000)
     result = build_application_rate_check(
         soil_based_application_rate_bootstrap_replicates_kg_ha=boot,
         known_application_rate_kg_ha=50_000.0,
     )
 
-    assert not result["known_within_3std"].iloc[0]
+    assert not result["known_within_2std"].iloc[0]
 
 
 def test_build_application_rate_check_zero_std() -> None:
@@ -62,4 +62,4 @@ def test_build_application_rate_check_zero_std() -> None:
     )
 
     assert result["deviation_in_std"].iloc[0] == float("inf")
-    assert not result["known_within_3std"].iloc[0]
+    assert not result["known_within_2std"].iloc[0]

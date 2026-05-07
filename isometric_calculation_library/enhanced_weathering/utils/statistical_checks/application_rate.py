@@ -16,6 +16,7 @@ def build_application_rate_check(
     soil_based_application_rate_bootstrap_replicates_kg_ha: Np1DArray[np.floating],
     known_application_rate_kg_ha: float,
     plot_type: PlotType = "treatment",
+    n_std: float = 2.0,
 ) -> pd.DataFrame:
     """Build the application rate diagnostic DataFrame.
 
@@ -27,13 +28,15 @@ def build_application_rate_check(
             samples in kg/ha derived from soil tracer mass balance.
         known_application_rate_kg_ha: Known feedstock application rate in kg/ha.
         plot_type: Label for the plot type.
+        n_std: Number of standard deviations within which the known rate must fall.
+            Default is 2; may be relaxed to 3 where scientifically justified.
     """
     soil_based_app_rate_t_ha = soil_based_application_rate_bootstrap_replicates_kg_ha / 1000
     known_app_rate_t_ha = known_application_rate_kg_ha / 1000
     soil_based_app_rate_mean = float(np.mean(soil_based_app_rate_t_ha))
     soil_based_app_rate_std = float(np.std(soil_based_app_rate_t_ha))
-    within_3std = (
-        bool(abs(known_app_rate_t_ha - soil_based_app_rate_mean) <= 3 * soil_based_app_rate_std)
+    within_n_std = (
+        bool(abs(known_app_rate_t_ha - soil_based_app_rate_mean) <= n_std * soil_based_app_rate_std)
         if soil_based_app_rate_std > 0
         else False
     )
@@ -47,7 +50,7 @@ def build_application_rate_check(
             "soil_based_app_rate_p16_t_ha": float(np.percentile(soil_based_app_rate_t_ha, 16)),
             "soil_based_app_rate_p84_t_ha": float(np.percentile(soil_based_app_rate_t_ha, 84)),
             "soil_based_app_rate_p95_t_ha": float(np.percentile(soil_based_app_rate_t_ha, 95)),
-            "known_within_3std": within_3std,
+            f"known_within_{int(n_std) if n_std == int(n_std) else n_std}std": within_n_std,
             "deviation_in_std": float(
                 abs(known_app_rate_t_ha - soil_based_app_rate_mean) / soil_based_app_rate_std,
             )
