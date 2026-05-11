@@ -186,6 +186,114 @@ def test_bootstrap_point_estimate_matches_compute_weighted() -> None:
     )
 
 
+def test_bootstrap_noise_is_reproducible() -> None:
+    """Same rng and noise_rng seeds produce identical bootstrap distributions."""
+    feedstock = _make_feedstock()
+    result_a = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+        noise_rng=np.random.default_rng(99),
+        noise_fractions={"ca": 0.1},
+    )
+    result_b = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+        noise_rng=np.random.default_rng(99),
+        noise_fractions={"ca": 0.1},
+    )
+    np.testing.assert_array_equal(
+        result_a.bootstrap_distributions["ca"],
+        result_b.bootstrap_distributions["ca"],
+    )
+
+
+def test_bootstrap_noise_differs_from_no_noise() -> None:
+    """With noise, bootstrap distributions differ from the noiseless case."""
+    feedstock = _make_feedstock()
+    no_noise = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+    )
+    with_noise = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+        noise_rng=np.random.default_rng(99),
+        noise_fractions={"ca": 0.1},
+    )
+    assert not np.allclose(
+        no_noise.bootstrap_distributions["ca"],
+        with_noise.bootstrap_distributions["ca"],
+    )
+
+
+def test_bootstrap_noise_widens_distribution() -> None:
+    """Noise increases the std of the bootstrap distribution."""
+    feedstock = _make_feedstock()
+    no_noise = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=10_000,
+    )
+    with_noise = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=10_000,
+        noise_rng=np.random.default_rng(1),
+        noise_fractions={"ca": 0.1},
+    )
+    assert float(np.std(with_noise.bootstrap_distributions["ca"])) > float(
+        np.std(no_noise.bootstrap_distributions["ca"]),
+    )
+
+
+def test_bootstrap_noise_rng_none_ignores_noise_fraction() -> None:
+    """noise_fractions is ignored when noise_rng is None."""
+    feedstock = _make_feedstock()
+    base = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+    )
+    with_fraction_no_rng = bootstrap_weighted_feedstock(
+        feedstock_samples=feedstock,
+        batch_weights={"batch_a": 1.0, "batch_b": 1.0, "batch_c": 1.0},
+        value_columns=["ca"],
+        batch_column="feedstock_batch_id",
+        rng=np.random.default_rng(0),
+        n_runs=500,
+        noise_fractions={"ca": 0.1},
+    )
+    np.testing.assert_array_equal(
+        base.bootstrap_distributions["ca"],
+        with_fraction_no_rng.bootstrap_distributions["ca"],
+    )
+
+
 def test_bootstrap_partial_batch_renormalises() -> None:
     """A batch in weights with no samples is silently skipped; remaining weights sum to 1."""
     # batch_MISSING has no samples — its weight should be excluded and the rest renormalised.

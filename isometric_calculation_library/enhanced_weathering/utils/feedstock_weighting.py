@@ -102,6 +102,9 @@ def bootstrap_weighted_feedstock(
     batch_column: str,
     rng: np.random.Generator,
     n_runs: int,
+    *,
+    noise_rng: np.random.Generator | None = None,
+    noise_fractions: Mapping[str, float] | None = None,
 ) -> BootstrapWeightedFeedstockResult:
     """Compute weighted feedstock composition with bootstrap uncertainty.
 
@@ -109,6 +112,10 @@ def bootstrap_weighted_feedstock(
     batch (with replacement), computes per-batch means, then applies the
     fixed weights. This captures measurement uncertainty within batches
     while preserving the plot-based weighting structure.
+
+    A single call with multiple ``value_columns`` shares bootstrap indices
+    across all columns, preserving within-replicate correlation between
+    co-measured elements (e.g. Ti, Ca, Mg from the same ICP run).
 
     Args:
         feedstock_samples: DataFrame with feedstock composition data.
@@ -119,6 +126,12 @@ def bootstrap_weighted_feedstock(
         batch_column: Column identifying the feedstock batch.
         rng: Random number generator for bootstrap.
         n_runs: Number of bootstrap iterations.
+        noise_rng: If provided, adds independent Gaussian noise to each
+            resampled value before averaging. Noise std = ``noise_fractions[col]
+            * |sample|`` per column. Ignored when ``noise_fractions`` is None.
+        noise_fractions: Per-column relative noise levels (e.g. ``{"Ti": 0.031,
+            "Ca": 0.028}``). Columns absent from this mapping receive no noise.
+            Ignored when ``noise_rng`` is None.
     """
     weight_sum = sum(batch_weights.values())
     normalised_weights = {k: v / weight_sum for k, v in batch_weights.items()}
@@ -154,10 +167,28 @@ def bootstrap_weighted_feedstock(
     # Bootstrap: resample within each batch, then apply weights (vectorised)
     boot_weighted = np.zeros((n_runs, n_cols))
 
+    run_idx = np.arange(n_runs)[:, np.newaxis]  # (n_runs, 1) for advanced indexing
+
     for batch_id, samples in batch_groups.items():
         n_samples = len(samples)
         indices = rng.integers(0, n_samples, size=(n_runs, n_samples))
-        resampled_means = samples[indices].mean(axis=1)
+        if noise_rng is not None and noise_fractions is not None:
+            # Build a per-replicate noisy pool (n_runs, n_samples, n_cols) so that
+            # each physical sample has one noise draw per replicate — drawing it
+            # multiple times in the same replicate yields the same noisy value.
+            noisy_pool = np.empty((n_runs, n_samples, n_cols))
+            noisy_pool[:] = samples  # broadcast (n_samples, n_cols) → (n_runs, ...)
+            for col_idx, col in enumerate(cols):
+                frac = noise_fractions.get(col, 0.0)
+                if frac > 0.0:
+                    noisy_pool[:, :, col_idx] += noise_rng.normal(
+                        scale=np.abs(samples[:, col_idx]) * frac,
+                        size=(n_runs, n_samples),
+                    )
+            selected = noisy_pool[run_idx, indices]  # (n_runs, draw_size, n_cols)
+        else:
+            selected = samples[indices]  # (n_runs, n_samples, n_cols)
+        resampled_means = selected.mean(axis=1)
         boot_weighted += resampled_means * normalised_weights[batch_id]
 
     bootstrap_distributions: dict[str, Np1DArray[np.floating]] = {

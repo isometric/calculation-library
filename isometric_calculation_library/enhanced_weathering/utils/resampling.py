@@ -132,6 +132,9 @@ def generate_bootstrap_location_indices(
 def compute_resampled_means_from_indices(
     values: Np1DArray[np.floating],
     indices: np.ndarray,
+    *,
+    noise_rng: np.random.Generator | None = None,
+    noise_fraction: float = 0.0,
 ) -> Np1DArray[np.floating]:
     """Compute bootstrap means using pre-generated resampling indices.
 
@@ -141,8 +144,27 @@ def compute_resampled_means_from_indices(
     Args:
         values: Array of per-location values to resample.
         indices: Bootstrap location indices of shape (n_runs, n_locations).
+        noise_rng: If provided, pre-perturbs each physical sample once per
+            replicate before resampling. A sample drawn multiple times in the
+            same replicate receives the same noise draw, because noise is tied
+            to the sample rather than to each draw event.
+        noise_fraction: Relative noise level (e.g. 0.1 for 10%). Ignored when
+            ``noise_rng`` is None.
     """
-    return np.mean(values[indices], axis=1)
+    if noise_rng is not None and noise_fraction > 0.0:
+        n_runs = indices.shape[0]
+        n_pool = len(values)
+        # Pre-perturb each physical sample once per replicate (n_runs, n_pool).
+        # Indices then draw from this noisy pool — duplicated draws within a
+        # replicate pick the same pre-perturbed value.
+        noisy_pool = values + noise_rng.normal(
+            scale=np.abs(values) * noise_fraction,
+            size=(n_runs, n_pool),
+        )
+        selected = noisy_pool[np.arange(n_runs)[:, np.newaxis], indices]
+    else:
+        selected = values[indices]
+    return np.mean(selected, axis=1)
 
 
 def summarize_distributions(
