@@ -17,7 +17,7 @@ def resample_mean(
 ) -> Np1DArray[np.floating]:
     """Bootstrap resample an array and compute mean for each iteration."""
     n_samples = len(values)
-    resampled = rng.choice(values, size=(n_runs, n_samples), replace=True)
+    resampled = rng.choice(values.astype(np.float32), size=(n_runs, n_samples), replace=True)
     return np.nanmean(resampled, axis=1)
 
 
