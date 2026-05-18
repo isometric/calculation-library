@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import NamedTuple, override
 
+import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class ZeroFilterResult(NamedTuple):
 
 
 class WinsoriseResult(NamedTuple):
-    """Result from winsorise."""
+    """Result from winsorise or iterative_sigma_clip."""
 
     samples: pd.DataFrame
     n_values_clipped: int
@@ -130,6 +131,82 @@ def zero_filter(
         n_samples_flagged=n_flagged,
         n_samples_dropped=n_dropped,
     )
+
+
+def iterative_sigma_clip(
+    samples: pd.DataFrame,
+    columns: Sequence[str],
+    group_columns: Sequence[str],
+    n_std: float = 3.0,
+    min_group_size: int = 5,
+    max_iterations: int = 10,
+) -> WinsoriseResult:
+    """Clip outliers using iterative sigma clipping.
+
+    Unlike standard winsorisation, the clipping bounds are computed from the
+    clean subset (after removing outliers), not the contaminated full group.
+    This prevents a single extreme value from inflating the group mean and std,
+    which would otherwise make the bound too loose.
+
+    Each iteration: flag values outside mean +/- n_std * std of the *unclipped*
+    values in the group, recompute statistics on the remaining values, and repeat
+    until no new values are flagged or max_iterations is reached. The final bounds
+    (anchored to the clean distribution) are then used to clip the original values.
+
+    Args:
+        samples: DataFrame with sample data.
+        columns: Numeric columns to clip.
+        group_columns: Columns defining groups for per-group statistics.
+        n_std: Number of standard deviations for clipping bounds.
+        min_group_size: Minimum group size to apply clipping.
+        max_iterations: Maximum number of sigma-clipping iterations.
+    """
+    samples = samples.copy()
+    values_clipped = 0
+    group_cols_list = list(group_columns)
+
+    working_col = "__working__"
+
+    for col in columns:
+        group_counts = samples.groupby(group_cols_list)[col].transform("count")
+        eligible = samples[col].notna() & (group_counts >= min_group_size)
+
+        # Build a working copy of eligible values in the df so groupby keys align.
+        working_df = samples[group_cols_list].copy()
+        working_df[working_col] = samples[col].where(eligible)
+
+        for _ in range(max_iterations):
+            group_means = working_df.groupby(group_cols_list)[working_col].transform("mean")
+            group_stds = working_df.groupby(group_cols_list)[working_col].transform("std")
+
+            valid_stats = group_stds.notna() & (group_stds != 0)
+            lower = group_means - n_std * group_stds
+            upper = group_means + n_std * group_stds
+
+            outlier_mask = (
+                eligible
+                & valid_stats
+                & working_df[working_col].notna()
+                & ((working_df[working_col] < lower) | (working_df[working_col] > upper))
+            )
+            if not outlier_mask.any():
+                break
+            working_df.loc[outlier_mask, working_col] = np.nan
+
+        # Compute final bounds from the clean distribution.
+        final_means = working_df.groupby(group_cols_list)[working_col].transform("mean")
+        final_stds = working_df.groupby(group_cols_list)[working_col].transform("std")
+
+        can_clip = eligible & final_stds.notna() & (final_stds != 0)
+        lower = final_means - n_std * final_stds
+        upper = final_means + n_std * final_stds
+
+        clipped = samples[col].clip(lower=lower, upper=upper)
+        changed = can_clip & (clipped != samples[col])
+        values_clipped += int(changed.sum())
+        samples.loc[can_clip, col] = clipped[can_clip]
+
+    return WinsoriseResult(samples=samples, n_values_clipped=values_clipped)
 
 
 def winsorise(
