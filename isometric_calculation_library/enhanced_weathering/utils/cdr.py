@@ -36,6 +36,33 @@ def compute_cation_stock_kg_ha(
     )
 
 
+def compute_depth_weighted_concentration_kg_ha(
+    concentration_mg_kg: Np1DArray[np.floating],
+    depth_cm: Np1DArray[np.floating],
+) -> Np1DArray[np.floating]:
+    """Scale per-sample concentrations by their individual sampling depths.
+
+    Returns per-sample depth-weighted values in kg/ha (excluding bulk density),
+    suitable for passing to a bootstrap resampler. Multiplying the bootstrapped
+    mean by a bootstrapped bulk density then gives the cation stock.
+
+    Using per-sample depths avoids the bias introduced by computing
+    mean(concentration) * mean(depth) when depth and concentration vary jointly
+    across locations.
+
+    Args:
+        concentration_mg_kg: Per-sample cation concentration (mg/kg).
+        depth_cm: Per-sample sampling depth (cm), one value per sample.
+
+    Returns:
+        Per-sample depth-weighted concentration (kg/ha / (kg/m³)), i.e. the
+        stock divided by bulk density. Multiply by a bootstrapped bulk density
+        to obtain stock in kg/ha.
+    """
+    volume_m3_per_ha = 100.0 * depth_cm
+    return concentration_mg_kg * volume_m3_per_ha / 1e6
+
+
 def compute_feedstock_cation_kg_ha(
     feedstock_amount_kg_ha: float | Np1DArray[np.floating],
     feedstock_cation_mg_kg: float | Np1DArray[np.floating],
