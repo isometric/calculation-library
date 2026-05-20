@@ -6,11 +6,118 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..data_cleaning import iterative_sigma_clip, winsorise
+from ..data_cleaning import iterative_sigma_clip, null_filter, winsorise, zero_filter
 
 
 def _make_df(values: list[float], group: str = "g") -> pd.DataFrame:
     return pd.DataFrame({"value": values, "group": group})
+
+
+def _make_sample_df(
+    *,
+    values: list[float | None],
+    location_ids: list[str],
+) -> pd.DataFrame:
+    return pd.DataFrame({"measurement": values, "location_id": location_ids})
+
+
+# ---------------------------------------------------------------------------
+# zero_filter
+# ---------------------------------------------------------------------------
+
+
+def test_zero_filter_drops_samples_with_zero_values() -> None:
+    """Samples whose measurement is exactly zero are removed."""
+    df = _make_sample_df(values=[1.0, 0.0, 2.0], location_ids=["a", "b", "c"])
+    result = zero_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 1
+    assert result.n_samples_dropped == 1
+    assert list(result.samples["measurement"]) == [1.0, 2.0]
+
+
+def test_zero_filter_paired_drops_all_samples_at_zero_location() -> None:
+    """When paired=True, all samples at a location with any zero are dropped."""
+    df = _make_sample_df(
+        values=[1.0, 0.0, 2.0, 3.0],
+        location_ids=["a", "a", "b", "c"],
+    )
+    result = zero_filter(df, columns=["measurement"], location_col="location_id", paired=True)
+    assert result.n_samples_flagged == 1
+    assert result.n_samples_dropped == 2
+    assert set(result.samples["location_id"]) == {"b", "c"}
+
+
+def test_zero_filter_does_not_drop_nan_values() -> None:
+    """NaN is not equal to zero, so NaN values pass through zero_filter unchanged."""
+    df = _make_sample_df(values=[1.0, float("nan"), 2.0], location_ids=["a", "b", "c"])
+    result = zero_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 0
+    assert result.n_samples_dropped == 0
+    assert len(result.samples) == 3
+
+
+def test_zero_filter_no_zeros_returns_all_samples() -> None:
+    df = _make_sample_df(values=[1.0, 2.0, 3.0], location_ids=["a", "b", "c"])
+    result = zero_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 0
+    assert result.n_samples_dropped == 0
+    assert len(result.samples) == 3
+
+
+# ---------------------------------------------------------------------------
+# null_filter
+# ---------------------------------------------------------------------------
+
+
+def test_null_filter_drops_samples_with_nan_values() -> None:
+    """Samples whose measurement is NaN are removed."""
+    df = _make_sample_df(values=[1.0, float("nan"), 2.0], location_ids=["a", "b", "c"])
+    result = null_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 1
+    assert result.n_samples_dropped == 1
+    assert list(result.samples["measurement"]) == [1.0, 2.0]
+
+
+def test_null_filter_paired_drops_all_samples_at_nan_location() -> None:
+    """When paired=True, all samples at a location with any NaN are dropped."""
+    df = _make_sample_df(
+        values=[1.0, float("nan"), 2.0, 3.0],
+        location_ids=["a", "a", "b", "c"],
+    )
+    result = null_filter(df, columns=["measurement"], location_col="location_id", paired=True)
+    assert result.n_samples_flagged == 1
+    assert result.n_samples_dropped == 2
+    assert set(result.samples["location_id"]) == {"b", "c"}
+
+
+def test_null_filter_does_not_drop_zero_values() -> None:
+    """Zero is not NaN, so zero values pass through null_filter unchanged."""
+    df = _make_sample_df(values=[1.0, 0.0, 2.0], location_ids=["a", "b", "c"])
+    result = null_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 0
+    assert result.n_samples_dropped == 0
+    assert len(result.samples) == 3
+
+
+def test_null_filter_no_nulls_returns_all_samples() -> None:
+    df = _make_sample_df(values=[1.0, 2.0, 3.0], location_ids=["a", "b", "c"])
+    result = null_filter(df, columns=["measurement"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 0
+    assert result.n_samples_dropped == 0
+    assert len(result.samples) == 3
+
+
+def test_null_filter_multiple_columns_flags_any_nan() -> None:
+    """A row is flagged if any of the checked columns contains NaN."""
+    df = pd.DataFrame({
+        "ca": [1.0, float("nan"), 3.0],
+        "mg": [1.0, 2.0, float("nan")],
+        "location_id": ["a", "b", "c"],
+    })
+    result = null_filter(df, columns=["ca", "mg"], location_col="location_id", paired=False)
+    assert result.n_samples_flagged == 2
+    assert result.n_samples_dropped == 2
+    assert list(result.samples["ca"]) == [1.0]
 
 
 # Tight cluster of 10 values around 1.0 (std ~0.05) plus one extreme outlier.

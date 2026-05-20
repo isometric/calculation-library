@@ -78,14 +78,14 @@ class ProcessingReport:
         ])
 
 
-class ZeroFilterResult(NamedTuple):
-    """Result from zero_filter."""
+class SampleFilterResult(NamedTuple):
+    """Result from zero_filter or null_filter."""
 
     samples: pd.DataFrame
     n_samples_flagged: int
-    """Number of individual samples with a zero value."""
+    """Number of individual samples that triggered the filter condition."""
     n_samples_dropped: int
-    """Total samples dropped (all samples at affected locations)."""
+    """Total samples dropped (may exceed n_samples_flagged when paired=True)."""
 
 
 class WinsoriseResult(NamedTuple):
@@ -101,7 +101,7 @@ def zero_filter(
     columns: Sequence[str],
     location_col: str,
     paired: bool = True,
-) -> ZeroFilterResult:
+) -> SampleFilterResult:
     """Remove samples with zero values in any of the specified columns.
 
     Args:
@@ -126,7 +126,49 @@ def zero_filter(
 
     n_dropped = int(drop_mask.sum())
 
-    return ZeroFilterResult(
+    return SampleFilterResult(
+        samples=samples[~drop_mask].copy(),
+        n_samples_flagged=n_flagged,
+        n_samples_dropped=n_dropped,
+    )
+
+
+def null_filter(
+    samples: pd.DataFrame,
+    columns: Sequence[str],
+    location_col: str,
+    paired: bool = True,
+) -> SampleFilterResult:
+    """Remove samples with NaN values in any of the specified columns.
+
+    Mirrors zero_filter but flags NaN rather than zero. Conventionally called
+    after zero_filter so that zero-value and null-value removals are reported
+    as separate steps; ordering does not affect correctness because zeros and
+    NaNs are mutually exclusive.
+
+    Args:
+        samples: DataFrame with sample data.
+        columns: Columns to check for NaN values.
+        location_col: Column identifying sampling locations.
+        paired: If True, drop all samples at locations where any sample has
+            a NaN value. If False, drop only the individual samples with
+            NaN values.
+    """
+    null_mask = pd.Series(False, index=samples.index)
+    for col in columns:
+        null_mask |= samples[col].isna()
+
+    n_flagged = int(null_mask.sum())
+
+    if paired:
+        flagged_locs = samples.loc[null_mask, location_col].unique()
+        drop_mask = samples[location_col].isin(flagged_locs)
+    else:
+        drop_mask = null_mask
+
+    n_dropped = int(drop_mask.sum())
+
+    return SampleFilterResult(
         samples=samples[~drop_mask].copy(),
         n_samples_flagged=n_flagged,
         n_samples_dropped=n_dropped,
