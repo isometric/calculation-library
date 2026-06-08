@@ -33,7 +33,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.29.15"
+version = "0.29.16"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -60,6 +60,9 @@ sort_inline_tables = true
 sort_table_keys = true
 spaces_indent_inline_array = 2
 trailing_comma_inline_array = true
+
+[tool.uv]
+exclude-newer = "3 days" # prevent installing packages uploaded in the last 3 days (supply chain protection)
 
 [tool.uv.build-backend]
 module-root = ""
