@@ -7,6 +7,7 @@ import pytest
 
 from isometric_calculation_library.enhanced_weathering.utils.cdr import (
     compute_depth_weighted_concentration_kg_ha,
+    compute_weathered_fraction_standard_tca,
 )
 
 
@@ -57,3 +58,105 @@ def test_compute_depth_weighted_concentration_kg_ha_multiplied_by_bd_gives_stock
     stock = float(np.mean(dw)) * bd
     # Expected: 1000 mg/kg * (100*20) m³/ha * 1500 kg/m³ / 1e6 = 3000 kg/ha
     np.testing.assert_allclose(stock, 3000.0)
+
+
+def test_weathered_fraction_standard_tca_complete_weathering_returns_one() -> None:
+    """When all feedstock cation has dissolved (R1 = BL, no control), Fw = 1."""
+    blp = np.array([200.0, 200.0, 200.0])
+    bl = np.array([100.0, 100.0, 100.0])
+    r1 = np.array([100.0, 100.0, 100.0])
+    control = np.array([0.0, 0.0, 0.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    np.testing.assert_allclose(result, 1.0)
+
+
+def test_weathered_fraction_standard_tca_no_weathering_returns_zero() -> None:
+    """When nothing weathered (R1 = BLP, no control), Fw = 0."""
+    blp = np.array([200.0, 200.0])
+    bl = np.array([100.0, 100.0])
+    r1 = np.array([200.0, 200.0])
+    control = np.array([0.0, 0.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    np.testing.assert_allclose(result, 0.0)
+
+
+def test_weathered_fraction_standard_tca_with_control_correction() -> None:
+    """Control correction reduces the apparent weathering signal."""
+    blp = np.array([200.0])
+    bl = np.array([100.0])
+    r1 = np.array([150.0])
+    control = np.array([10.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    # Fw = (200 - 150 - 10) / (200 - 100) = 40/100 = 0.4
+    np.testing.assert_allclose(result, 0.4)
+
+
+def test_weathered_fraction_standard_tca_zero_denominator_returns_nan() -> None:
+    """When BLP equals BL (no feedstock signal), result is NaN."""
+    blp = np.array([100.0, 200.0])
+    bl = np.array([100.0, 100.0])
+    r1 = np.array([90.0, 150.0])
+    control = np.array([0.0, 0.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    assert np.isnan(result[0])
+    np.testing.assert_allclose(result[1], 0.5)
+
+
+def test_weathered_fraction_standard_tca_negative_denominator_computes() -> None:
+    """When BLP < BL (soil heterogeneity), the guard does not trigger — abs(denom) > 0."""
+    blp = np.array([95.0])
+    bl = np.array([100.0])
+    r1 = np.array([90.0])
+    control = np.array([0.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    # denominator = 95 - 100 = -5, abs(-5) > 0 so it computes: (95-90-0)/(-5) = -1.0
+    np.testing.assert_allclose(result, -1.0)
+
+
+def test_weathered_fraction_standard_tca_nan_values_ignored_by_nanmean() -> None:
+    """NaN from guarded locations does not contaminate bootstrap aggregation."""
+    blp = np.array([100.0, 200.0, 200.0])
+    bl = np.array([100.0, 100.0, 100.0])
+    r1 = np.array([80.0, 100.0, 100.0])
+    control = np.array([0.0, 0.0, 0.0])
+
+    result = compute_weathered_fraction_standard_tca(
+        baseline_post_application_concentration=blp,
+        resampling_concentration=r1,
+        baseline_concentration=bl,
+        cation_dissolved_kg_ha=control,
+    )
+    # First element: NaN (denominator = 0). Others: (200-100-0)/(200-100) = 1.0
+    assert np.isnan(result[0])
+    mean = float(np.nanmean(result))
+    np.testing.assert_allclose(mean, 1.0)

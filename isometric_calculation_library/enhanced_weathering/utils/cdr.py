@@ -191,6 +191,50 @@ def convert_cdr_to_co2(
     return co2_kg_ha, total_co2_kg, total_co2_tonnes
 
 
+def compute_weathered_fraction_standard_tca(
+    *,
+    baseline_post_application_concentration: Np1DArray[np.floating],
+    resampling_concentration: Np1DArray[np.floating],
+    baseline_concentration: Np1DArray[np.floating],
+    cation_dissolved_kg_ha: Np1DArray[np.floating],
+) -> Np1DArray[np.floating]:
+    """Compute weathered fraction using measured post-application baseline samples.
+
+    Weathered fraction represents how much of the applied feedstock cation has
+    dissolved during the reporting period, accounting for background weathering
+    via a control correction term.
+
+    Formula:
+        Fw = (BLP - R1 - control) / (BLP - BL)
+
+    Where BLP is measured post-application baseline, R1 is end-of-reporting-period,
+    BL is pre-application baseline, and control is background cation dissolution.
+
+    Locations where the denominator (BLP - BL) is zero — meaning no feedstock
+    signal is detectable — produce NaN. These NaN values propagate through
+    subsequent aggregation functions (e.g. nanmean, nanpercentile) without
+    contaminating valid bootstrap samples.
+
+    Args:
+        baseline_post_application_concentration: Measured post-application baseline
+            cation concentration (kg/ha), bootstrapped array.
+        resampling_concentration: End-of-reporting-period cation concentration
+            (kg/ha), bootstrapped array.
+        baseline_concentration: Pre-application baseline cation concentration
+            (kg/ha), bootstrapped array.
+        cation_dissolved_kg_ha: Background cation dissolution from control plots
+            (kg/ha), bootstrapped array.
+    """
+    denominator = baseline_post_application_concentration - baseline_concentration
+    numerator = (
+        baseline_post_application_concentration - resampling_concentration - cation_dissolved_kg_ha
+    )
+    valid = np.abs(denominator) > 0
+    result = np.full_like(numerator, np.nan)
+    result[valid] = numerator[valid] / denominator[valid]
+    return result
+
+
 class WeatheredFractionResult(NamedTuple):
     """Result from compute_weathered_fraction."""
 
