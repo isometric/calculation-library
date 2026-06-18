@@ -2,11 +2,14 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
+import re
+
 import numpy as np
 import pytest
 
 from isometric_calculation_library.enhanced_weathering.utils.cdr import (
     compute_depth_weighted_concentration_kg_ha,
+    compute_weathered_fraction,
     compute_weathered_fraction_standard_tca,
 )
 
@@ -160,3 +163,22 @@ def test_weathered_fraction_standard_tca_nan_values_ignored_by_nanmean() -> None
     assert np.isnan(result[0])
     mean = float(np.nanmean(result))
     np.testing.assert_allclose(mean, 1.0)
+
+
+def test_compute_weathered_fraction_raises_on_zero_potential() -> None:
+    """Zero feedstock amount zeroes the theoretical potential; this must raise
+    rather than silently divide to inf/nan."""
+    expected_message = (
+        "theoretical_potential_tco2 must be positive to compute a weathered "
+        "fraction, got 0.0. This happens when feedstock_amount_kg_ha, the "
+        "feedstock cation concentrations, or area_hectares is zero — check the "
+        "feedstock and area inputs."
+    )
+    with pytest.raises(ValueError, match=re.escape(expected_message)):
+        compute_weathered_fraction(
+            cdr_tco2=np.array([1.0, 2.0]),
+            feedstock_amount_kg_ha=0.0,
+            feedstock_ca_mg_kg=50_000.0,
+            feedstock_mg_mg_kg=30_000.0,
+            area_hectares=10.0,
+        )

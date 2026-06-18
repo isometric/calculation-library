@@ -57,11 +57,12 @@ class ProcessingReport:
         lines.extend(str(step) for step in self.steps)
         lines.append("=" * 50)
         if len(self.steps) > 0:
-            total_removed = self.steps[0].rows_before - self.steps[-1].rows_after
+            initial_rows = self.steps[0].rows_before
+            total_removed = initial_rows - self.steps[-1].rows_after
+            percentage = f"{total_removed / initial_rows * 100:.1f}%" if initial_rows > 0 else "n/a"
             lines.append(
-                f"Total: {self.steps[0].rows_before} -> {self.steps[-1].rows_after} rows "
-                f"({total_removed} removed, "
-                f"{total_removed / self.steps[0].rows_before * 100:.1f}%)",
+                f"Total: {initial_rows} -> {self.steps[-1].rows_after} rows "
+                f"({total_removed} removed, {percentage})",
             )
         return "\n".join(lines)
 

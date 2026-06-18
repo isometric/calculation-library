@@ -6,7 +6,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..data_cleaning import iterative_sigma_clip, null_filter, winsorise, zero_filter
+from ..data_cleaning import (
+    ProcessingReport,
+    ProcessingStep,
+    iterative_sigma_clip,
+    null_filter,
+    winsorise,
+    zero_filter,
+)
 
 
 def _make_df(values: list[float], group: str = "g") -> pd.DataFrame:
@@ -236,3 +243,17 @@ def test_iterative_sigma_clip_preserves_non_outlier_values() -> None:
     result = iterative_sigma_clip(df, columns=["value"], group_columns=["group"], n_std=3.0)
     result_clean = result.samples["value"].iloc[: len(_CLEAN)].tolist()
     assert result_clean == pytest.approx(_CLEAN)
+
+
+# ---------------------------------------------------------------------------
+# ProcessingReport
+# ---------------------------------------------------------------------------
+
+
+def test_processing_report_summary_handles_zero_initial_rows() -> None:
+    """summary() must not raise (ZeroDivisionError) when the first step starts from
+    zero rows; the removed percentage is reported as 'n/a'."""
+    report = ProcessingReport()
+    report.add(ProcessingStep("empty step", rows_before=0, rows_after=0))
+    summary = report.summary()
+    assert "n/a" in summary

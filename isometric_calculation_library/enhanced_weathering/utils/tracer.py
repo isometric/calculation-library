@@ -21,10 +21,16 @@ def compute_mass_ratio_from_immobile_tracer(
     """Compute feedstock-to-soil mass ratio from immobile tracer mass balance.
 
     m = m_f / m_s = (T_rp - T_bl) / (T_feed - T_rp)
+
+    Infinite values (from a zero denominator, i.e. feedstock tracer equal to the
+    soil reporting-period tracer) are replaced with NaN, matching
+    `compute_fraction_dissolved`. Note this only catches an exactly-zero
+    denominator, not merely implausible (e.g. negative) finite ratios.
     """
-    return (soil_end_of_reporting_period_tracer_mg_kg - soil_baseline_tracer_mg_kg) / (
+    mass_ratio = (soil_end_of_reporting_period_tracer_mg_kg - soil_baseline_tracer_mg_kg) / (
         feedstock_tracer_mg_kg - soil_end_of_reporting_period_tracer_mg_kg
     )
+    return np.where(np.isinf(mass_ratio), np.nan, mass_ratio)
 
 
 def compute_post_application_concentration(

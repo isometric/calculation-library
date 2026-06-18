@@ -35,6 +35,18 @@ def test_mass_ratio_positive_when_tracer_increases() -> None:
     assert result == pytest.approx([expected])
 
 
+def test_mass_ratio_zero_denominator_gives_nan() -> None:
+    """Feedstock tracer equal to soil reporting-period tracer zeroes the denominator,
+    so that replicate is NaN (not inf), while other replicates stay finite."""
+    result = compute_mass_ratio_from_immobile_tracer(
+        feedstock_tracer_mg_kg=60.0,
+        soil_baseline_tracer_mg_kg=np.array([50.0, 50.0]),
+        soil_end_of_reporting_period_tracer_mg_kg=np.array([60.0, 55.0]),
+    )
+    assert np.isnan(result[0])
+    assert np.isfinite(result[1])
+
+
 def test_post_application_concentration_mixing() -> None:
     """C_post = (C_bl + m * C_feed) / (1 + m)."""
     m = np.array([0.01])

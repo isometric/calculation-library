@@ -261,6 +261,13 @@ def compute_weathered_fraction(
         + convert_cation_kg_to_co2_kg(cation_kg=np.array([mg_kg_ha]), cation="Mg")[0],
     )
     theoretical_potential_tco2 = (pot_co2_kg_ha * area_hectares) / 1000
+    if theoretical_potential_tco2 <= 0:
+        raise ValueError(
+            "theoretical_potential_tco2 must be positive to compute a weathered "
+            f"fraction, got {theoretical_potential_tco2}. This happens when "
+            "feedstock_amount_kg_ha, the feedstock cation concentrations, or "
+            "area_hectares is zero — check the feedstock and area inputs.",
+        )
     return WeatheredFractionResult(
         weathered_fraction=cdr_tco2 / theoretical_potential_tco2,
         theoretical_potential_tco2=theoretical_potential_tco2,

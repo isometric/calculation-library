@@ -152,11 +152,11 @@ def test_main_returns_expected_structure() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -184,11 +184,11 @@ def test_main_result_is_finite() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -200,11 +200,11 @@ def test_main_positive_cdr_with_weathering_signal() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -217,11 +217,11 @@ def test_main_distributions_summary_contains_total_co2() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -240,11 +240,11 @@ def test_main_area_hectares_has_treatment_and_control() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -260,11 +260,11 @@ def test_main_pairing_report_has_treatment_and_control() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -280,11 +280,11 @@ def test_main_tracer_resolvability_is_treatment_only() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -298,11 +298,11 @@ def test_main_significance_tests_per_cation() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -318,8 +318,22 @@ def test_main_is_deterministic() -> None:
         "known_application_rate_kg_ha": APPLICATION_RATE_KG_HA,
     }
 
-    result_1 = main(baseline, rp, feedstock, bd, plots, **kwargs)
-    result_2 = main(baseline, rp, feedstock, bd, plots, **kwargs)
+    result_1 = main(
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
+        **kwargs,
+    )
+    result_2 = main(
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
+        **kwargs,
+    )
 
     assert result_1["result"] == pytest.approx(result_2["result"])
 
@@ -329,11 +343,11 @@ def test_main_data_cleaning_report_tracks_dropped_samples() -> None:
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 
@@ -347,16 +361,79 @@ def test_main_data_cleaning_report_tracks_dropped_samples() -> None:
         assert row["n_retained"] == row["n_input"] - row["n_dropped"]
 
 
+def test_main_raises_when_no_treatment_plot() -> None:
+    """A misconfigured input with no treatment plot must raise loudly rather than
+    silently producing a credited CDR of zero from a missing treatment area."""
+    baseline, rp, feedstock, bd, _ = _build_inputs()
+    control_only_plots = gpd.GeoDataFrame(
+        {"Type": ["Control"], "Geometry": [_CONTROL_POLY]},
+        geometry="Geometry",
+        crs="EPSG:4326",
+    )
+
+    with pytest.raises(ValueError, match="treatment"):
+        main(
+            baseline_samples=baseline,
+            reporting_period_samples=rp,
+            feedstock_samples=feedstock,
+            bulk_density_samples_kg_m3=bd,
+            plots=control_only_plots,
+            known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
+        )
+
+
+def test_main_raises_when_no_control_plot() -> None:
+    """A misconfigured input with no control plot must raise loudly, symmetric to
+    the missing-treatment case (the control correction needs control samples)."""
+    baseline, rp, feedstock, bd, _ = _build_inputs()
+    treatment_only_plots = gpd.GeoDataFrame(
+        {"Type": ["Treatment"], "Geometry": [_TREATMENT_POLY]},
+        geometry="Geometry",
+        crs="EPSG:4326",
+    )
+
+    with pytest.raises(ValueError, match="control"):
+        main(
+            baseline_samples=baseline,
+            reporting_period_samples=rp,
+            feedstock_samples=feedstock,
+            bulk_density_samples_kg_m3=bd,
+            plots=treatment_only_plots,
+            known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
+        )
+
+
+def test_main_raises_when_treatment_present_in_only_one_period() -> None:
+    """Split-type keys are built from a union across periods, so a treatment plot
+    present only in the baseline still gets a key but an empty reporting-period
+    split. That pairs to zero locations and would silently yield NaN, so it must
+    raise instead."""
+    baseline, rp, feedstock, bd, plots = _build_inputs()
+    # Drop the treatment reporting-period samples (treatment lon ~0.001, control
+    # lon ~0.021), leaving treatment present in the baseline period only.
+    reporting_period_control_only = rp[rp["longitude"] > 0.015]
+
+    with pytest.raises(ValueError, match="both baseline and reporting-period"):
+        main(
+            baseline_samples=baseline,
+            reporting_period_samples=reporting_period_control_only,
+            feedstock_samples=feedstock,
+            bulk_density_samples_kg_m3=bd,
+            plots=plots,
+            known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
+        )
+
+
 def test_main_no_deployment_in_outputs() -> None:
     """No intermediate output should reference deployment plots."""
     baseline, rp, feedstock, bd, plots = _build_inputs()
 
     result = main(
-        baseline,
-        rp,
-        feedstock,
-        bd,
-        plots,
+        baseline_samples=baseline,
+        reporting_period_samples=rp,
+        feedstock_samples=feedstock,
+        bulk_density_samples_kg_m3=bd,
+        plots=plots,
         known_application_rate_kg_ha=APPLICATION_RATE_KG_HA,
     )
 

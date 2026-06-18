@@ -172,12 +172,12 @@ def _compute_control_correction_ratios(
 
 
 def main(
+    *,
     baseline_samples: pd.DataFrame,
     reporting_period_samples: pd.DataFrame,
     feedstock_samples: pd.DataFrame,
     bulk_density_samples_kg_m3: pd.DataFrame,
     plots: gpd.GeoDataFrame,
-    *,
     known_application_rate_kg_ha: float,
 ) -> ModelResult:
     """Calculate CDR using Ti tracer-corrected TCA with treatment plots only.
@@ -215,8 +215,33 @@ def main(
 
     # Spatial assignment and splitting (no outlier handling)
     split_result = assign_and_split_by_plot_type(baseline_samples, reporting_period_samples, plots)
+    for required_plot_type in ("treatment", "control"):
+        if required_plot_type not in split_result.splits:
+            raise ValueError(
+                f"No samples were assigned to any '{required_plot_type}' plot. "
+                f"Assigned plot types: {sorted(split_result.splits.keys())!r}. "
+                "Check that plots contain polygons with Type='treatment' and "
+                "Type='control', and that sample coordinates fall within them.",
+            )
     treatment_baseline, treatment_reporting_period = split_result.splits["treatment"]
     control_baseline, control_reporting_period = split_result.splits["control"]
+
+    # Split-type keys come from a union across periods, so a plot type present in
+    # only one period yields a (non-empty, empty) split that passes the key check
+    # above but pairs to zero locations downstream and silently collapses the
+    # bootstrap to NaN. Require both periods to be populated.
+    for plot_type_name, plot_baseline, plot_reporting_period in (
+        ("treatment", treatment_baseline, treatment_reporting_period),
+        ("control", control_baseline, control_reporting_period),
+    ):
+        if plot_baseline.empty or plot_reporting_period.empty:
+            raise ValueError(
+                f"Plot type {plot_type_name!r} must have both baseline and "
+                f"reporting-period samples, got {len(plot_baseline)} baseline and "
+                f"{len(plot_reporting_period)} reporting-period samples. A plot type "
+                "present in only one period pairs to zero locations and would "
+                "otherwise yield a silent NaN result.",
+            )
 
     data_cleaning_report = pd.DataFrame([
         {
@@ -240,7 +265,14 @@ def main(
         plots,
         plot_types=("control", "treatment"),
     )
-    treatment_area = area_hectares.get("treatment", 0.0)
+    # The split guard above already proved treatment polygons exist, and
+    # calculate_area_hectares_by_plot_type uses the same plots + case-folding,
+    # so area_hectares["treatment"] is always populated here.
+    treatment_area = area_hectares["treatment"]
+    if treatment_area <= 0:
+        raise ValueError(
+            f"treatment_area must be positive, got {treatment_area}. Check the plot geometries.",
+        )
 
     tracer_col = mass_fraction_column_name(_TRACER)
     ca_col = mass_fraction_column_name("Ca")

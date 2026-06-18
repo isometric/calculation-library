@@ -35,7 +35,16 @@ def calculate_tracer_resolvability(
         baseline_treatment_tracer_mg_kg: Baseline treatment soil tracer
             concentrations (one value per sample).
     """
-    feedstock_mass_fraction = feedstock_mass_kg / (feedstock_mass_kg + soil_mass_kg)
+    total_mass_kg = feedstock_mass_kg + soil_mass_kg
+    if not total_mass_kg > 0:
+        raise ValueError(
+            "Tracer resolvability requires a positive total mass (feedstock + soil), "
+            f"got feedstock_mass_kg={feedstock_mass_kg} and soil_mass_kg={soil_mass_kg}. "
+            "This typically means a plot type with no assigned area or samples (e.g. "
+            "an absent plot type defaulting its area to zero); the feedstock mixing "
+            "fraction is otherwise undefined and would silently yield a NaN index.",
+        )
+    feedstock_mass_fraction = feedstock_mass_kg / total_mass_kg
     mean_feedstock_tracer = float(np.mean(feedstock_tracer_mg_kg))
     mean_soil_tracer = float(np.mean(baseline_treatment_tracer_mg_kg))
     feedstock_tracer_standard_error = float(
@@ -50,6 +59,14 @@ def calculate_tracer_resolvability(
         2 * soil_tracer_standard_error
         + (feedstock_tracer_standard_error - soil_tracer_standard_error) * feedstock_mass_fraction
     )
+    if not noise > 0:
+        raise ValueError(
+            f"Tracer resolvability noise term must be positive, got {noise}. The noise "
+            "term is soil_se*(2 - feedstock_mass_fraction) + feedstock_se*feedstock_mass_fraction "
+            "with feedstock_mass_fraction in [0, 1], so it can only reach zero when both "
+            "standard errors are zero: single-sample or identical-value inputs giving a "
+            "zero standard error. The tracer signal cannot be resolved from measurement noise.",
+        )
     return signal / noise
 
 
