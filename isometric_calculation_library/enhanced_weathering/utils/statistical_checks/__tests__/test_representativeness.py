@@ -81,3 +81,11 @@ def test_representativeness_two_tailed_symmetric() -> None:
     result_ba = check_representativeness(group_a=group_b, group_b=group_a)
 
     assert result_ab.p_value == pytest.approx(result_ba.p_value)
+
+
+def test_representativeness_raises_on_too_few_samples() -> None:
+    with pytest.raises(ValueError, match="at least 2 samples per group"):
+        check_representativeness(
+            group_a=np.array([1.0]),
+            group_b=np.array([1.0, 2.0, 3.0]),
+        )

@@ -42,14 +42,23 @@ def compute_weighted_feedstock_composition(
         batch_column: Column identifying the feedstock batch.
     """
     weight_sum = sum(batch_weights.values())
-    normalised_weights = {k: v / weight_sum for k, v in batch_weights.items()}
+    if weight_sum <= 0:
+        raise ValueError(
+            f"batch_weights must sum to a positive value, got {weight_sum}.",
+        )
     batch_means = feedstock_samples.groupby(batch_column)[list(value_columns)].mean()
     batch_mean_dicts = {col: batch_means[col].to_dict() for col in value_columns}
 
-    # Re-normalise over batches that are actually present in feedstock_samples.
+    # Normalise weights over the batches actually present in feedstock_samples.
     present_batches = set(batch_means.index)
-    effective_weights = {k: v for k, v in normalised_weights.items() if k in present_batches}
+    effective_weights = {k: v for k, v in batch_weights.items() if k in present_batches}
     effective_weight_sum = sum(effective_weights.values())
+    if effective_weight_sum <= 0:
+        raise ValueError(
+            "None of the weighted batches are present in feedstock_samples "
+            f"(batch_weights keys: {list(batch_weights)!r}, "
+            f"present batches: {sorted(map(str, present_batches))!r}).",
+        )
     effective_weights = {k: v / effective_weight_sum for k, v in effective_weights.items()}
 
     weighted_values = dict[str, float]()
@@ -134,6 +143,10 @@ def bootstrap_weighted_feedstock(
             Ignored when ``noise_rng`` is None.
     """
     weight_sum = sum(batch_weights.values())
+    if weight_sum <= 0:
+        raise ValueError(
+            f"batch_weights must sum to a positive value, got {weight_sum}.",
+        )
     normalised_weights = {k: v / weight_sum for k, v in batch_weights.items()}
     cols = list(value_columns)
     n_cols = len(cols)
@@ -152,10 +165,15 @@ def bootstrap_weighted_feedstock(
             batch_means_arr[batch_id] = batch_data.mean().to_numpy()
             effective_weight_sum += weight
 
-    if effective_weight_sum > 0:
-        normalised_weights = {
-            k: v / effective_weight_sum for k, v in normalised_weights.items() if k in batch_groups
-        }
+    if effective_weight_sum <= 0:
+        raise ValueError(
+            "None of the weighted feedstock batches have complete (non-NaN) samples, "
+            "so a weighted composition cannot be computed. "
+            f"batch_weights keys: {list(batch_weights)!r}.",
+        )
+    normalised_weights = {
+        k: v / effective_weight_sum for k, v in normalised_weights.items() if k in batch_groups
+    }
 
     # Point estimate: weighted mean of batch means
     point_values = np.zeros(n_cols)

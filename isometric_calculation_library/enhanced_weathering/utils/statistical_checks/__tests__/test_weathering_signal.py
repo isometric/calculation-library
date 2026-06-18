@@ -311,3 +311,19 @@ def test_run_significance_tests_returns_one_row_per_element() -> None:
     assert set(result["cation"]) == {"Ca", "Mg"}
     assert len(result) == 2
     assert all(result["p_value"].between(0, 1))
+
+
+def test_weathering_significance_raises_on_too_few_samples() -> None:
+    with pytest.raises(ValueError, match="at least 2 samples per group"):
+        check_weathering_significance(
+            post_application_concentrations_mg_kg=np.array([100.0]),
+            end_of_reporting_period_concentrations_mg_kg=np.array([90.0, 80.0]),
+        )
+
+
+def test_weathering_significance_paired_raises_on_too_few_samples() -> None:
+    with pytest.raises(ValueError, match="at least 2 matched samples"):
+        check_weathering_significance_paired(
+            post_application_concentrations_mg_kg=np.array([100.0]),
+            end_of_reporting_period_concentrations_mg_kg=np.array([90.0]),
+        )

@@ -58,6 +58,13 @@ def check_representativeness(
         group_b: Values for group B (e.g. treatment).
         significance_level: Significance level (default 0.05 per protocol).
     """
+    if len(group_a) < 2 or len(group_b) < 2:
+        raise ValueError(
+            "Representativeness test requires at least 2 samples per group "
+            f"(got {len(group_a)} and {len(group_b)}); a smaller group yields a "
+            "meaningless or NaN p-value that would silently read as non-significant.",
+        )
+
     both_normal = check_normality(group_a) and check_normality(group_b)
 
     if both_normal:

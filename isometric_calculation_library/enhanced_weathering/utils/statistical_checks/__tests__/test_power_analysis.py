@@ -196,3 +196,18 @@ def test_zero_delta_returns_inf_n_required() -> None:
 
     assert results[0].n_required == float("inf")
     assert not results[0].passes
+
+
+def test_power_analysis_raises_on_too_few_samples() -> None:
+    rng = np.random.default_rng(0)
+    paired = _make_paired_df(1, rng)
+    with pytest.raises(ValueError, match="at least 2 non-null"):
+        compute_power_analysis(
+            paired=paired,
+            feedstock_concentrations={"Ti": 17000.0},
+            effective_application_rate_kg_ha=5000.0,
+            n_eff=1.0,
+            bulk_density_kg_m3=1580.0,
+            sampling_depth_cm=7.5,
+            elements=["Ti"],
+        )

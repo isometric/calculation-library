@@ -122,13 +122,23 @@ def compute_power_analysis(
         baseline_col = f"bl_{col}"
         reporting_period_col = f"rp_{col}"
 
+        baseline_values = paired[baseline_col].dropna()
+        reporting_period_values = paired[reporting_period_col].dropna()
+        if len(baseline_values) < 2 or len(reporting_period_values) < 2:
+            raise ValueError(
+                f"Power analysis for element {element!r} requires at least 2 non-null "
+                f"baseline and reporting-period values (got {len(baseline_values)} and "
+                f"{len(reporting_period_values)}); the standard deviation is otherwise "
+                "undefined and would silently yield NaN.",
+            )
+
         feedstock_concentration = feedstock_concentrations[element]
-        mean_baseline = float(paired[baseline_col].mean())
+        mean_baseline = float(baseline_values.mean())
 
         delta_mg_kg = r * (feedstock_concentration - mean_baseline) / (1 + r)
 
-        sigma_baseline = float(paired[baseline_col].dropna().std())
-        sigma_reporting_period = float(paired[reporting_period_col].dropna().std())
+        sigma_baseline = float(baseline_values.std())
+        sigma_reporting_period = float(reporting_period_values.std())
 
         if delta_mg_kg > 0:
             numerator = (_Z_ALPHA + _Z_BETA) ** 2 * (sigma_baseline**2 + sigma_reporting_period**2)

@@ -310,3 +310,45 @@ def test_bootstrap_partial_batch_renormalises() -> None:
         n_runs=10,
     )
     assert result.point_estimate["ca"].iloc[0] == pytest.approx(batch_a_ca_mean)
+
+
+def test_weighted_composition_raises_on_zero_total_weight() -> None:
+    with pytest.raises(ValueError, match="positive value"):
+        compute_weighted_feedstock_composition(
+            _make_feedstock(),
+            batch_weights={},
+            value_columns=["ca", "mg"],
+        )
+
+
+def test_weighted_composition_raises_when_no_weighted_batch_present() -> None:
+    with pytest.raises(ValueError, match="present in feedstock_samples"):
+        compute_weighted_feedstock_composition(
+            _make_feedstock(),
+            batch_weights={"batch_z": 1.0},
+            value_columns=["ca", "mg"],
+        )
+
+
+def test_bootstrap_raises_on_zero_total_weight() -> None:
+    with pytest.raises(ValueError, match="positive value"):
+        bootstrap_weighted_feedstock(
+            _make_feedstock(),
+            batch_weights={},
+            value_columns=["ca", "mg"],
+            batch_column="feedstock_batch_id",
+            rng=np.random.default_rng(0),
+            n_runs=10,
+        )
+
+
+def test_bootstrap_raises_when_no_batch_has_complete_samples() -> None:
+    with pytest.raises(ValueError, match="complete"):
+        bootstrap_weighted_feedstock(
+            _make_feedstock(),
+            batch_weights={"batch_z": 1.0},
+            value_columns=["ca", "mg"],
+            batch_column="feedstock_batch_id",
+            rng=np.random.default_rng(0),
+            n_runs=10,
+        )

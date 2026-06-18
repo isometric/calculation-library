@@ -92,6 +92,17 @@ def check_weathering_significance(
         end_of_reporting_period_concentrations_mg_kg: Measured end-of-reporting-period cation concentrations.
         significance_level: Significance level (default 0.05 per protocol).
     """
+    if (
+        len(post_application_concentrations_mg_kg) < 2
+        or len(end_of_reporting_period_concentrations_mg_kg) < 2
+    ):
+        raise ValueError(
+            "Weathering significance test requires at least 2 samples per group "
+            f"(got {len(post_application_concentrations_mg_kg)} and "
+            f"{len(end_of_reporting_period_concentrations_mg_kg)}); a smaller group "
+            "yields a meaningless or NaN p-value that would silently read as non-significant.",
+        )
+
     both_distributions_normal = check_normality(
         post_application_concentrations_mg_kg,
     ) and check_normality(end_of_reporting_period_concentrations_mg_kg)
@@ -160,6 +171,12 @@ def check_weathering_significance_paired(
             f"{len(end_of_reporting_period_concentrations_mg_kg)})"
         )
         raise ValueError(msg)
+
+    if len(post_application_concentrations_mg_kg) < 2:
+        raise ValueError(
+            "Paired weathering test requires at least 2 matched samples, "
+            f"got {len(post_application_concentrations_mg_kg)}.",
+        )
 
     differences = (
         post_application_concentrations_mg_kg - end_of_reporting_period_concentrations_mg_kg
