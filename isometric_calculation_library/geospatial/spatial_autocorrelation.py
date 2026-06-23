@@ -144,7 +144,7 @@ def compute_morans_i_permutation_test(
 
     Args:
         paired: DataFrame with ``latitude``, ``longitude``, and variable columns.
-        variables: Column names to test (typically EoRP - baseline differences).
+        variables: Column names to test (typically end-of-reporting-period minus baseline differences).
         n_permutations: Number of random permutations (protocol requires >= 1000).
         rng: Random number generator. Pass an explicit seeded generator for
             reproducibility; omitting this will produce non-deterministic results.
@@ -243,7 +243,7 @@ def compute_neff_from_morans_i(
     """Compute effective sample size from Moran's I spatial autocorrelation.
 
     Procedure:
-      1. Compute Moran's I for each variable (EoRP - baseline differences).
+      1. Compute Moran's I for each variable (end-of-reporting-period minus baseline differences).
       2. Run permutation test to assess significance (Benjamini-Hochberg corrected).
       3. For significant variables with I > 0: n_eff = n * (1 - I) / (1 + I).
       4. Take minimum n_eff across variables (most conservative).

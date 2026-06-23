@@ -49,7 +49,8 @@ def resample_dataframe_paired(
 ) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating]]:
     """Bootstrap resample paired baseline/end-of-reporting-period columns from a single DataFrame.
 
-    Use this with data prepared by `pairing.prepare_paired_data()`.
+    Expects a DataFrame with one row per paired location and the named
+    baseline / end-of-reporting-period value columns.
 
     Returns:
         Tuple of (baseline_means, end_of_reporting_period_means) each of length n_runs.
@@ -209,7 +210,6 @@ def resample_by_group(
         rng: NumPy random generator.
         location_data: DataFrame with columns "baseline_mean" and
             "end_of_reporting_period_mean", one row per location.
-            Produced by ``pairing.build_location_level_data``.
         n_runs: Number of bootstrap iterations.
         group_labels: Integer label per location assigning it to a group.
             Length must equal len(location_data).

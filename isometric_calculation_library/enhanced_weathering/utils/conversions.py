@@ -55,9 +55,8 @@ def convert_cation_kg_to_co2_kg(
 ) -> Np1DArray[np.floating]:
     """Convert cation mass to CO2 mass equivalent.
 
-    For divalent cations (Ca²⁺, Mg²⁺), each mole of cation dissolved
-    corresponds to one mole of CO2 captured per unit charge via carbonate
-    weathering.
+    Each mole of cation captures one mole of CO2 per unit of ionic charge,
+    so a divalent cation (Ca²⁺, Mg²⁺) corresponds to 2 moles of CO2.
     """
     molar_mass = atomic_weight(cation)
     charge = _cation_to_charge(cation)
