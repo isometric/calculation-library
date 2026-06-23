@@ -5,9 +5,19 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ...allometric_equations.chave import CHAVE_DEFAULT, ChaveModel
-from ...constants import CARBON_FRACTION, CO2_TO_CARBON_RATIO, M2_PER_HECTARE
-from ..field_plot import FieldPlot, TreeMeasurements
+from isometric_calculation_library.biosphere.allometric_equations.chave import (
+    CHAVE_DEFAULT,
+    ChaveModel,
+)
+from isometric_calculation_library.biosphere.constants import (
+    CARBON_FRACTION,
+    CO2_TO_CARBON_RATIO,
+    M2_PER_HECTARE,
+)
+from isometric_calculation_library.biosphere.monte_carlo.field_plot import (
+    FieldPlot,
+    TreeMeasurements,
+)
 
 
 def _make_trees(n: int = 3) -> TreeMeasurements:

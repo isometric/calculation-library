@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..spatial_autocorrelation import (
+from isometric_calculation_library.geospatial.spatial_autocorrelation import (
     MoransIResult,
     NeffResult,
     _benjamini_hochberg,  # pyright: ignore[reportPrivateUsage]

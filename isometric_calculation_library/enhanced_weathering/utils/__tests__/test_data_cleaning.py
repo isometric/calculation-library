@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..data_cleaning import (
+from isometric_calculation_library.enhanced_weathering.utils.data_cleaning import (
     ProcessingReport,
     ProcessingStep,
     iterative_sigma_clip,

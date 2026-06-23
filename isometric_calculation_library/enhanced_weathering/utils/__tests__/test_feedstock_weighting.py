@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..feedstock_weighting import (
+from isometric_calculation_library.enhanced_weathering.utils.feedstock_weighting import (
     BootstrapWeightedFeedstockResult,
     bootstrap_weighted_feedstock,
     compute_plot_coverage_weights,

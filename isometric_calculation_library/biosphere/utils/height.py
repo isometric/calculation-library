@@ -6,7 +6,8 @@
 
 import numpy as np
 
-from ..types import Np1DArray, Np2DArray
+from isometric_calculation_library.biosphere.types import Np1DArray, Np2DArray
+
 from .clipped_normal import clipped_normal
 
 HEIGHT_CLIP_MIN_M = 1.0

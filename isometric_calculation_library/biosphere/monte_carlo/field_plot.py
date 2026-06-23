@@ -8,9 +8,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..allometric_equations.chave import ChaveModel
-from ..constants import CO2_TO_CARBON_RATIO, M2_PER_HECTARE
-from ..types import Np1DArray
+from isometric_calculation_library.biosphere.allometric_equations.chave import ChaveModel
+from isometric_calculation_library.biosphere.constants import CO2_TO_CARBON_RATIO, M2_PER_HECTARE
+from isometric_calculation_library.biosphere.types import Np1DArray
 
 
 @dataclass(frozen=True)

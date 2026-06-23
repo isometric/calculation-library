@@ -7,8 +7,8 @@
 import numpy as np
 import pandas as pd
 
-from ..spatial import PlotType
-from ..types import Np1DArray
+from isometric_calculation_library.enhanced_weathering.utils.spatial import PlotType
+from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
 
 
 def build_application_rate_check(

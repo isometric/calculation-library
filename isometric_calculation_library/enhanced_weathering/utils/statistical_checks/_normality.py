@@ -5,7 +5,7 @@
 import numpy as np
 from scipy import stats
 
-from ..types import Np1DArray
+from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
 
 
 def check_normality(

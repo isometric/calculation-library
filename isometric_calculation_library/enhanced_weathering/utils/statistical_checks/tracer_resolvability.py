@@ -7,9 +7,12 @@
 import numpy as np
 import pandas as pd
 
-from ..spatial import PlotType
-from ..tracer import ImmobileTracer
-from ..types import Np1DArray, mass_fraction_column_name
+from isometric_calculation_library.enhanced_weathering.utils.spatial import PlotType
+from isometric_calculation_library.enhanced_weathering.utils.tracer import ImmobileTracer
+from isometric_calculation_library.enhanced_weathering.utils.types import (
+    Np1DArray,
+    mass_fraction_column_name,
+)
 
 
 def calculate_tracer_resolvability(

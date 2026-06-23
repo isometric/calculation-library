@@ -17,8 +17,8 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 
-from ..types import Np1DArray
-from ..utils.clipped_normal import clipped_normal
+from isometric_calculation_library.biosphere.types import Np1DArray
+from isometric_calculation_library.biosphere.utils.clipped_normal import clipped_normal
 
 
 @dataclass(frozen=True)

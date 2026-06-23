@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..power_analysis import PowerAnalysisResult, compute_power_analysis
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.power_analysis import (
+    PowerAnalysisResult,
+    compute_power_analysis,
+)
 
 
 def _make_paired_df(

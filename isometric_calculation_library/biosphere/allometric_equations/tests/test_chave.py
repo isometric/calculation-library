@@ -5,7 +5,11 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ..chave import CHAVE_DEFAULT, ChaveModel, create_chave_model_generator
+from isometric_calculation_library.biosphere.allometric_equations.chave import (
+    CHAVE_DEFAULT,
+    ChaveModel,
+    create_chave_model_generator,
+)
 
 # --- ChaveModel.compute_agb_tonnes ---
 

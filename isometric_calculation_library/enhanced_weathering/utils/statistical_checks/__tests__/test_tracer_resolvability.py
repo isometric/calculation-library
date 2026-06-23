@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..tracer_resolvability import (
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.tracer_resolvability import (
     build_tracer_resolvability_df,
     calculate_tracer_resolvability,
 )

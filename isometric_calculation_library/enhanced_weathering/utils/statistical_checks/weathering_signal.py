@@ -19,9 +19,12 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from isometric_calculation_library.enhanced_weathering.utils.types import (
+    Np1DArray,
+    mass_fraction_column_name,
+)
 from isometric_calculation_library.utils.elements import ElementSymbol
 
-from ..types import Np1DArray, mass_fraction_column_name
 from ._normality import check_normality
 
 

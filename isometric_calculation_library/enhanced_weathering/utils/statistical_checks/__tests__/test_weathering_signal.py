@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ..weathering_signal import (
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.weathering_signal import (
     SignificanceTestResult,
     check_weathering_significance,
     check_weathering_significance_paired,

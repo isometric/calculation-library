@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from ..representativeness import (
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.representativeness import (
     RepresentativenessTestResult,
     check_representativeness,
 )

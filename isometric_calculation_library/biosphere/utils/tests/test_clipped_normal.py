@@ -5,7 +5,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ..clipped_normal import clipped_normal
+from isometric_calculation_library.biosphere.utils.clipped_normal import clipped_normal
 
 
 def test_clipped_normal_output_shape_tuple() -> None:

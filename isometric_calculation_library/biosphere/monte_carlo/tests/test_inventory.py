@@ -5,16 +5,19 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from ...constants import DBH_ERROR_INTERCEPT, DBH_ERROR_SLOPE
-from ...utils.dbh import DBH_CLIP_MAX_CM, DBH_CLIP_MIN_CM
-from ...utils.height import HEIGHT_CLIP_MAX_M, HEIGHT_CLIP_MIN_M
-from ..inventory import (
+from isometric_calculation_library.biosphere.constants import DBH_ERROR_INTERCEPT, DBH_ERROR_SLOPE
+from isometric_calculation_library.biosphere.monte_carlo.inventory import (
     CARBON_RATIO_MEAN,
     CARBON_RATIO_SD,
     MONTE_CARLO_VARIANTS,
     WOOD_DENSITY_MAX,
     WOOD_DENSITY_MIN,
     inventory_monte_carlo,
+)
+from isometric_calculation_library.biosphere.utils.dbh import DBH_CLIP_MAX_CM, DBH_CLIP_MIN_CM
+from isometric_calculation_library.biosphere.utils.height import (
+    HEIGHT_CLIP_MAX_M,
+    HEIGHT_CLIP_MIN_M,
 )
 
 _TREE_DATA_KEYS = {

@@ -4,7 +4,9 @@
 
 import numpy as np
 
-from ..application_rate import build_application_rate_check
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.application_rate import (
+    build_application_rate_check,
+)
 
 
 def test_build_application_rate_check_columns() -> None:

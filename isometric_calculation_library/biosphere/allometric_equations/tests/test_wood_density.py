@@ -5,7 +5,12 @@
 import pytest
 from numpy.testing import assert_allclose
 
-from ..wood_density import WoodDensityRecord, get_wood_density, list_species, tree_type_to_species
+from isometric_calculation_library.biosphere.allometric_equations.wood_density import (
+    WoodDensityRecord,
+    get_wood_density,
+    list_species,
+    tree_type_to_species,
+)
 
 
 def test_get_wood_density_known_species() -> None:

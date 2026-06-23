@@ -8,7 +8,7 @@ from molmass.elements import (  # noqa: TID251 - molmass is allowed as a test de
     ELEMENTS,
 )
 
-from ..elements import (
+from isometric_calculation_library.utils.elements import (
     ElementSymbol,
     atomic_number,
     atomic_weight,

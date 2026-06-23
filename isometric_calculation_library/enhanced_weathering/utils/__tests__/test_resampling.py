@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from ..resampling import (
+from isometric_calculation_library.enhanced_weathering.utils.resampling import (
     compute_resampled_means_from_indices,
     generate_bootstrap_location_indices,
     summarize_distributions,
