@@ -33,7 +33,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.34.1"
+version = "0.34.2"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -66,6 +66,10 @@ exclude-newer = "3 days" # prevent installing packages uploaded in the last 3 da
 
 [tool.uv.build-backend]
 module-root = ""
-# keep in sync with .github/paths/calculation-library-package-scope.env
+# (1) Keep this in sync with .github/paths/calculation-library-package-scope.env
+# (2) Exclude patterns are unanchored by default, so they need a leading "/" to
+# match only the project root; include patterns are already root-anchored,
+# so a leading "/" there breaks the match.
 source-exclude = ["/isometric_calculation_library/hidden"]
+source-include = ["CHANGELOG.md"]
 wheel-exclude = ["/isometric_calculation_library/hidden"]
