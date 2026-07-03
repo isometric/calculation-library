@@ -49,6 +49,10 @@ Assumes you are using [uv](https://docs.astral.sh/uv/) to manage the project.
 uv run pytest
 ```
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of notable changes by minor version.
+
 ## License
 
 This project is source-available under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/), with additional permissions granted in the [LICENSE](LICENSE) file.
