@@ -46,7 +46,7 @@ MONTE_CARLO_VARIANTS: dict[str, str] = {
     "height_cov": "height_m",
     "height_geometric": "height_m",
     "dbh_cov": "dbh_cm",
-    "dbh_with_big": "dbh_cm",
+    "dbh_with_blunders": "dbh_cm",
 }
 """Maps alternate Monte Carlo array names back to the base parameter names
 expected by the biomass calculation."""
@@ -153,7 +153,7 @@ def inventory_monte_carlo(
 
     return {
         "dbh_cm": dbh_perturbed,
-        "dbh_with_big": dbh_with_blunders,
+        "dbh_with_blunders": dbh_with_blunders,
         "wood_density": wood_density_perturbed,
         "height_m": height_perturbed,
         "height_geometric": height_geometric,

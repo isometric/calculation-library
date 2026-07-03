@@ -22,7 +22,7 @@ from isometric_calculation_library.biosphere.utils.height import (
 
 _TREE_DATA_KEYS = {
     "dbh_cm",
-    "dbh_with_big",
+    "dbh_with_blunders",
     "wood_density",
     "height_m",
     "height_geometric",
@@ -67,8 +67,8 @@ def test_inventory_monte_carlo_dbh_within_bounds() -> None:
     mc = inventory_monte_carlo(**_make_tree_data(), num_sims=100, rng=np.random.default_rng(42))
     assert np.all(mc["dbh_cm"] >= DBH_CLIP_MIN_CM)
     assert np.all(mc["dbh_cm"] <= DBH_CLIP_MAX_CM)
-    assert np.all(mc["dbh_with_big"] >= DBH_CLIP_MIN_CM)
-    assert np.all(mc["dbh_with_big"] <= DBH_CLIP_MAX_CM)
+    assert np.all(mc["dbh_with_blunders"] >= DBH_CLIP_MIN_CM)
+    assert np.all(mc["dbh_with_blunders"] <= DBH_CLIP_MAX_CM)
 
 
 def test_inventory_monte_carlo_height_within_bounds() -> None:
@@ -122,4 +122,4 @@ def test_monte_carlo_variants_maps_alternate_names_to_base() -> None:
     assert MONTE_CARLO_VARIANTS["height_cov"] == "height_m"
     assert MONTE_CARLO_VARIANTS["height_geometric"] == "height_m"
     assert MONTE_CARLO_VARIANTS["dbh_cov"] == "dbh_cm"
-    assert MONTE_CARLO_VARIANTS["dbh_with_big"] == "dbh_cm"
+    assert MONTE_CARLO_VARIANTS["dbh_with_blunders"] == "dbh_cm"

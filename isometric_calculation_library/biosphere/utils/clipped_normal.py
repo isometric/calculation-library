@@ -11,7 +11,7 @@ def clipped_normal(
     size: int | tuple[int, ...],
     rng: np.random.Generator,
     *,
-    sigma: float = 6,
+    clip_sigmas: float = 6,
 ) -> np.ndarray:
-    """Standard normal draws clipped to +/- sigma (default 6)."""
-    return rng.standard_normal(size).clip(-sigma, sigma)
+    """Standard normal draws clipped to +/- clip_sigmas standard deviations (default 6)."""
+    return rng.standard_normal(size).clip(-clip_sigmas, clip_sigmas)

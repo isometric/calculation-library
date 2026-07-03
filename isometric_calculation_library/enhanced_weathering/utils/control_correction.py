@@ -36,7 +36,6 @@ __all__ = [
     "apply_control_correction_delta_paired",
     "apply_control_correction_delta_unpaired",
     "bootstrap_control_correction_ratios",
-    "check_background_weathering_significance",
     "check_background_weathering_significance_paired",
     "check_background_weathering_significance_unpaired",
     "compute_control_correction_ratio",
@@ -128,13 +127,6 @@ class ControlCorrectionDeltaResult(NamedTuple):
     """Number of control reporting period samples used in the test."""
 
 
-# Keep old name as alias for backward compatibility with other models.
-ControlCorrectionResult = ControlCorrectionDeltaResult
-
-# Keep old name as alias for backward compatibility with other models.
-check_background_weathering_significance = check_background_weathering_significance_paired
-
-
 def apply_control_correction_delta_paired(
     *,
     ctrl_paired: pd.DataFrame,
@@ -211,10 +203,6 @@ def apply_control_correction_delta_paired(
         )
 
     return output
-
-
-# Keep old name as alias for backward compatibility with other models.
-apply_control_correction_paired = apply_control_correction_delta_paired
 
 
 def apply_control_correction_delta_unpaired(
@@ -295,28 +283,3 @@ def apply_control_correction_delta_unpaired(
         )
 
     return output
-
-
-def apply_control_correction_unpaired(
-    *,
-    control_reporting_period_samples: pd.DataFrame,
-    reference_baseline_samples: pd.DataFrame,
-    elements: Sequence[ElementSymbol],
-    rng: np.random.Generator,
-    n_runs: int,
-    alpha: float = 0.05,
-    floor_at_zero: bool = True,
-) -> list[ControlCorrectionDeltaResult]:
-    """Deprecated alias for apply_control_correction_delta_unpaired.
-
-    Use apply_control_correction_delta_unpaired with control_baseline_samples instead.
-    """
-    return apply_control_correction_delta_unpaired(
-        control_reporting_period_samples=control_reporting_period_samples,
-        control_baseline_samples=reference_baseline_samples,
-        elements=elements,
-        rng=rng,
-        n_runs=n_runs,
-        alpha=alpha,
-        floor_at_zero=floor_at_zero,
-    )

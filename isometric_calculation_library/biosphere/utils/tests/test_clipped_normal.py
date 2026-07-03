@@ -19,7 +19,7 @@ def test_clipped_normal_output_shape_scalar() -> None:
 
 
 def test_clipped_normal_clipping_bounds() -> None:
-    result = clipped_normal(100_000, np.random.default_rng(42), sigma=3)
+    result = clipped_normal(100_000, np.random.default_rng(42), clip_sigmas=3)
     assert np.all(result >= -3)
     assert np.all(result <= 3)
 

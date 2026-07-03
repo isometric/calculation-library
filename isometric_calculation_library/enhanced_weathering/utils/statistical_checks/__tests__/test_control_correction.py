@@ -9,10 +9,7 @@ import pytest
 from isometric_calculation_library.enhanced_weathering.utils.control_correction import (
     apply_control_correction_delta_paired,
     apply_control_correction_delta_unpaired,
-    apply_control_correction_paired,
-    apply_control_correction_unpaired,
     bootstrap_control_correction_ratios,
-    check_background_weathering_significance,
     check_background_weathering_significance_paired,
     check_background_weathering_significance_unpaired,
     compute_control_correction_ratio,
@@ -182,19 +179,6 @@ def test_background_weathering_nan_handling() -> None:
     # Only 3 valid pairs (indices 0, 3, 4)
     assert results[0].n_baseline_samples == 3
     assert results[0].n_reporting_period_samples == 3
-
-
-def test_check_background_weathering_significance_alias() -> None:
-    """Old name is still importable and works identically."""
-    n = 30
-    rng = np.random.default_rng(0)
-    ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, n),
-    })
-    r1 = check_background_weathering_significance(ctrl_paired=ctrl_paired, elements=["Ca"])
-    r2 = check_background_weathering_significance_paired(ctrl_paired=ctrl_paired, elements=["Ca"])
-    assert r1 == r2
 
 
 # -- test_background_weathering_significance_unpaired -------------------------
@@ -405,23 +389,6 @@ def test_apply_control_correction_paired_no_floor() -> None:
     assert float(r.cc_delta_distribution.max()) < 0.0
 
 
-def test_apply_control_correction_paired_alias() -> None:
-    """Old name apply_control_correction_paired is still callable."""
-    rng = np.random.default_rng(42)
-    n = 30
-    ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, n),
-    })
-    results = apply_control_correction_paired(
-        ctrl_paired=ctrl_paired,
-        elements=["Ca"],
-        rng=rng,
-        n_runs=100,
-    )
-    assert len(results) == 1
-
-
 # -- apply_control_correction_delta_unpaired -----------------------------------
 
 
@@ -511,19 +478,3 @@ def test_apply_control_correction_unpaired_no_floor() -> None:
     assert r.is_significant is True
     # With no floor, distribution may contain negative values
     assert float(r.cc_delta_distribution.min()) < float(r.cc_delta_distribution.max())
-
-
-def test_apply_control_correction_unpaired_alias() -> None:
-    """Old name apply_control_correction_unpaired is still callable."""
-    rng = np.random.default_rng(42)
-    n = 50
-    control_rp = pd.DataFrame({"mass_fraction_ca": rng.normal(200, 10, n)})
-    control_bl = pd.DataFrame({"mass_fraction_ca": rng.normal(200, 10, n)})
-    results = apply_control_correction_unpaired(
-        control_reporting_period_samples=control_rp,
-        reference_baseline_samples=control_bl,
-        elements=["Ca"],
-        rng=rng,
-        n_runs=100,
-    )
-    assert len(results) == 1
