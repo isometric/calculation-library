@@ -9,6 +9,7 @@ from isometric_calculation_library.biosphere.constants import DBH_ERROR_INTERCEP
 from isometric_calculation_library.biosphere.monte_carlo.inventory import (
     CARBON_RATIO_MEAN,
     CARBON_RATIO_SD,
+    DBH_HEIGHT_ERROR_CORRELATION,
     MONTE_CARLO_VARIANTS,
     WOOD_DENSITY_MAX,
     WOOD_DENSITY_MIN,
@@ -105,6 +106,18 @@ def test_inventory_monte_carlo_carbon_ratio_distribution() -> None:
     mc = inventory_monte_carlo(**_make_tree_data(), num_sims=10_000, rng=np.random.default_rng(42))
     assert_allclose(np.mean(mc["carbon_ratio"]), CARBON_RATIO_MEAN, atol=0.005)
     assert_allclose(np.std(mc["carbon_ratio"]), CARBON_RATIO_SD, atol=0.005)
+
+
+def test_inventory_monte_carlo_dbh_height_correlation_preserved() -> None:
+    """The vectorised correlated draw preserves the intended DBH-height error correlation.
+
+    With constant inputs and small SDs the clip bounds never trigger, so the
+    empirical correlation between dbh_cov and height_cov equals the underlying
+    correlated standard-normal correlation.
+    """
+    mc = inventory_monte_carlo(**_make_tree_data(), num_sims=50_000, rng=np.random.default_rng(42))
+    corr = float(np.corrcoef(mc["dbh_cov"][:, 0], mc["height_cov"][:, 0])[0, 1])
+    assert_allclose(corr, DBH_HEIGHT_ERROR_CORRELATION, atol=0.02)
 
 
 def test_inventory_monte_carlo_deterministic() -> None:

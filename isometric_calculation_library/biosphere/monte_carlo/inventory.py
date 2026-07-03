@@ -69,9 +69,9 @@ def _perturb_dbh_height_correlated(
         [1, DBH_HEIGHT_ERROR_CORRELATION],
         [DBH_HEIGHT_ERROR_CORRELATION, 1],
     ]
-    correlated = np.asarray([
-        rng.multivariate_normal([0, 0], cov_matrix, num_sims) for _ in range(num_trees)
-    ]).transpose([1, 0, 2])
+    # One vectorised draw of shape (num_sims, num_trees, 2); each [.., 0]/[.., 1]
+    # pair is a correlated standard-normal sample shared by DBH and height.
+    correlated = rng.multivariate_normal([0, 0], cov_matrix, size=(num_sims, num_trees))
 
     dbh_correlated = (dbh_cm + correlated[:, :, 0] * dbh_sd).clip(DBH_CLIP_MIN_CM, DBH_CLIP_MAX_CM)
     height_correlated = (height_m + correlated[:, :, 1] * height_sd).clip(
