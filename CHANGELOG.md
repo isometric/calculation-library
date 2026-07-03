@@ -1,26 +1,47 @@
 # Changelog
 
-All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
+
+## [0.34.3](https://github.com/isometric/calculation-library/releases/tag/v0.34.3)
+
+### Changed
+
+- Enforced canonical `CHANGELOG.md` entry format and reformatted old entries
+- Upgraded the Keep a Changelog reference from 1.1.0 to 2.0.0
 
 ## [0.34.2](https://github.com/isometric/calculation-library/releases/tag/v0.34.2)
 
-Documentation: `CHANGELOG.md` is now bundled into the source distribution, so it's mirrored to the public GitHub repo.
+### Changed
+
+- Documentation: `CHANGELOG.md` is now bundled into the source distribution, so it's mirrored to the public GitHub repo.
 
 ## [0.34.1](https://github.com/isometric/calculation-library/releases/tag/v0.34.1)
 
-Documentation: backfilled the remaining patch-version entries in `CHANGELOG.md` from every released GitHub tag (previously only minor versions were covered), and switched to inline release links in each heading.
+### Changed
+
+- Documentation: backfilled the remaining patch-version entries in `CHANGELOG.md` from every released GitHub tag (previously only minor versions were covered), and switched to inline release links in each heading.
 
 ## [0.34.0](https://github.com/isometric/calculation-library/releases/tag/v0.34.0)
 
-Vectorised the inventory Monte Carlo correlated draw (internal performance improvement); results are unchanged.
+### Changed
+
+- Vectorised the inventory Monte Carlo correlated draw (internal performance improvement); results are unchanged.
 
 ## [0.33.0](https://github.com/isometric/calculation-library/releases/tag/v0.33.0)
 
-Internal naming cleanup (`clip_sigmas`, `dbh_with_blunders`) and removal of deprecated control-correction compatibility shims. No changes to public calculation results.
+### Changed
+
+- Internal naming cleanup (`clip_sigmas`, `dbh_with_blunders`). No changes to public calculation results.
+
+### Removed
+
+- Deprecated control-correction compatibility shims.
 
 ## [0.32.12](https://github.com/isometric/calculation-library/releases/tag/v0.32.12)
 
-Documentation: added `CHANGELOG.md` with full release history backfilled from PyPI, and a link to it in `README.public.md`.
+### Changed
+
+- Documentation: added `CHANGELOG.md` with full release history backfilled from PyPI, and a link to it in `README.public.md`.
 
 ## [0.32.11](https://github.com/isometric/calculation-library/releases/tag/v0.32.11)
 
@@ -461,7 +482,9 @@ Internal improvements only, no changes to public-facing functionality.
 
 ## [0.17.0](https://github.com/isometric/calculation-library/releases/tag/v0.17.0)
 
-Initial internal README and packaging metadata; no public modules yet.
+### Added
+
+- Initial internal README and packaging metadata; no public modules yet.
 
 ## [0.16.0](https://github.com/isometric/calculation-library/releases/tag/v0.16.0)
 
@@ -469,5 +492,8 @@ Internal improvements only, no changes to public-facing functionality.
 
 ## [0.15.0](https://github.com/isometric/calculation-library/releases/tag/v0.15.0)
 
-Initial public release. Public modules are being progressively populated.
+### Added
+
+- Initial public release: package scaffolding only (`pyproject.toml`, license, empty `calculations` module); no public calculation modules yet
+- `dependencies` — re-exports `geopandas`, `numpy`, `pandas`, `shapely` so downstream code only needs to pin this library's version
 
