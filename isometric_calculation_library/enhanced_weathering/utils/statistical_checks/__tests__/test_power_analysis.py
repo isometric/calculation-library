@@ -18,14 +18,14 @@ def _make_paired_df(
     baseline_ti_std: float = 1000.0,
     reporting_period_ti_std: float = 1200.0,
 ) -> pd.DataFrame:
-    """Create a paired DataFrame with bl_/rp_ columns for Ti, Ca, Mg."""
+    """Create a paired DataFrame with baseline_/reporting_period_ columns for Ti, Ca, Mg."""
     return pd.DataFrame({
-        "bl_mass_fraction_ti": rng.normal(5000, baseline_ti_std, n),
-        "rp_mass_fraction_ti": rng.normal(5500, reporting_period_ti_std, n),
-        "bl_mass_fraction_ca": rng.normal(15000, 2000, n),
-        "rp_mass_fraction_ca": rng.normal(18000, 5000, n),
-        "bl_mass_fraction_mg": rng.normal(8000, 1400, n),
-        "rp_mass_fraction_mg": rng.normal(9500, 2500, n),
+        "baseline_mass_fraction_ti": rng.normal(5000, baseline_ti_std, n),
+        "reporting_period_mass_fraction_ti": rng.normal(5500, reporting_period_ti_std, n),
+        "baseline_mass_fraction_ca": rng.normal(15000, 2000, n),
+        "reporting_period_mass_fraction_ca": rng.normal(18000, 5000, n),
+        "baseline_mass_fraction_mg": rng.normal(8000, 1400, n),
+        "reporting_period_mass_fraction_mg": rng.normal(9500, 2500, n),
     })
 
 
@@ -54,7 +54,7 @@ def test_delta_computation() -> None:
     """delta = r * (C_F - C_BL) / (1 + r), r = R / (BD * D * 10000)."""
     rng = np.random.default_rng(0)
     paired = _make_paired_df(50, rng)
-    mean_baseline_ti = float(paired["bl_mass_fraction_ti"].mean())
+    mean_baseline_ti = float(paired["baseline_mass_fraction_ti"].mean())
 
     results = compute_power_analysis(
         paired=paired,
@@ -81,13 +81,13 @@ def test_high_variability_increases_n_required() -> None:
 
     # Low variability
     paired_low = pd.DataFrame({
-        "bl_mass_fraction_ti": rng.normal(5000, 200, 100),
-        "rp_mass_fraction_ti": rng.normal(5500, 200, 100),
+        "baseline_mass_fraction_ti": rng.normal(5000, 200, 100),
+        "reporting_period_mass_fraction_ti": rng.normal(5500, 200, 100),
     })
     # High variability
     paired_high = pd.DataFrame({
-        "bl_mass_fraction_ti": rng.normal(5000, 2000, 100),
-        "rp_mass_fraction_ti": rng.normal(5500, 2000, 100),
+        "baseline_mass_fraction_ti": rng.normal(5000, 2000, 100),
+        "reporting_period_mass_fraction_ti": rng.normal(5500, 2000, 100),
     })
 
     result_low = compute_power_analysis(

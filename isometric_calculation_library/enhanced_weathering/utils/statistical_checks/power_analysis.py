@@ -81,8 +81,8 @@ def compute_power_analysis(
     Pass condition: n_eff >= n_req.
 
     Args:
-        paired: DataFrame with ``bl_mass_fraction_<element>`` and
-            ``rp_mass_fraction_<element>`` columns (one row per paired location).
+        paired: DataFrame with ``baseline_mass_fraction_<element>`` and
+            ``reporting_period_mass_fraction_<element>`` columns (one row per paired location).
         feedstock_concentrations: Mean feedstock concentration per element (mg/kg).
             Keys should match elements (e.g. {"Ti": 17000, "Ca": 68000, "Mg": 29000}).
         effective_application_rate_kg_ha: Deployment-derived application rate.
@@ -102,7 +102,10 @@ def compute_power_analysis(
     expected_cols = [
         c
         for e in elements
-        for c in (f"bl_mass_fraction_{e.lower()}", f"rp_mass_fraction_{e.lower()}")
+        for c in (
+            f"baseline_mass_fraction_{e.lower()}",
+            f"reporting_period_mass_fraction_{e.lower()}",
+        )
     ]
     missing_cols = [c for c in expected_cols if c not in paired.columns]
     if missing_cols:
@@ -119,8 +122,8 @@ def compute_power_analysis(
 
     for element in elements:
         col = f"mass_fraction_{element.lower()}"
-        baseline_col = f"bl_{col}"
-        reporting_period_col = f"rp_{col}"
+        baseline_col = f"baseline_{col}"
+        reporting_period_col = f"reporting_period_{col}"
 
         baseline_values = paired[baseline_col].dropna()
         reporting_period_values = paired[reporting_period_col].dropna()

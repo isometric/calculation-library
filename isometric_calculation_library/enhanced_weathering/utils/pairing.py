@@ -16,8 +16,8 @@ class PairingResult(NamedTuple):
     paired: pd.DataFrame
     """DataFrame with one row per paired location.
 
-    Columns are ``{location_col}``, ``bl_{col}`` and ``rp_{col}`` for each
-    value column, where ``bl_`` and ``rp_`` are averages per location.
+    Columns are ``{location_col}``, ``baseline_{col}`` and ``reporting_period_{col}`` for each
+    value column, where ``baseline_`` and ``reporting_period_`` are averages per location.
     """
 
     n_baseline_only: int
@@ -45,18 +45,22 @@ def pair_locations(
         value_columns: Columns to average and pair (e.g. mass fraction columns).
         location_col: Column identifying measurement locations.
     """
-    bl_agg = baseline_samples.groupby(location_col)[list(value_columns)].mean().reset_index()
-    rp_agg = (
+    baseline_agg = baseline_samples.groupby(location_col)[list(value_columns)].mean().reset_index()
+    reporting_period_agg = (
         reporting_period_samples.groupby(location_col)[list(value_columns)].mean().reset_index()
     )
 
-    bl_renamed = bl_agg.rename(columns={col: f"bl_{col}" for col in value_columns})
-    rp_renamed = rp_agg.rename(columns={col: f"rp_{col}" for col in value_columns})
+    baseline_renamed = baseline_agg.rename(
+        columns={col: f"baseline_{col}" for col in value_columns},
+    )
+    reporting_period_renamed = reporting_period_agg.rename(
+        columns={col: f"reporting_period_{col}" for col in value_columns},
+    )
 
-    paired = bl_renamed.merge(rp_renamed, on=location_col, how="inner")
+    paired = baseline_renamed.merge(reporting_period_renamed, on=location_col, how="inner")
 
     return PairingResult(
         paired=paired,
-        n_baseline_only=len(bl_agg) - len(paired),
-        n_reporting_period_only=len(rp_agg) - len(paired),
+        n_baseline_only=len(baseline_agg) - len(paired),
+        n_reporting_period_only=len(reporting_period_agg) - len(paired),
     )

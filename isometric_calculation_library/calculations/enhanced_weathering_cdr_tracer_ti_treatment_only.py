@@ -358,11 +358,11 @@ def main(
 
     # Tracer bootstrap
     tracer_baseline_boot = compute_resampled_means_from_indices(
-        treatment_paired[f"bl_{tracer_col}"].to_numpy(),
+        treatment_paired[f"baseline_{tracer_col}"].to_numpy(),
         resampled_treatment_locations,
     )
     tracer_reporting_period_boot = compute_resampled_means_from_indices(
-        treatment_paired[f"rp_{tracer_col}"].to_numpy(),
+        treatment_paired[f"reporting_period_{tracer_col}"].to_numpy(),
         resampled_treatment_locations,
     )
 
@@ -388,11 +388,11 @@ def main(
     for cation in _CATIONS:
         cation_col = mass_fraction_column_name(cation)
         cation_baseline_boot = compute_resampled_means_from_indices(
-            treatment_paired[f"bl_{cation_col}"].to_numpy(),
+            treatment_paired[f"baseline_{cation_col}"].to_numpy(),
             resampled_treatment_locations,
         )
         cation_reporting_period_boot = compute_resampled_means_from_indices(
-            treatment_paired[f"rp_{cation_col}"].to_numpy(),
+            treatment_paired[f"reporting_period_{cation_col}"].to_numpy(),
             resampled_treatment_locations,
         )
         feedstock_boot = feedstock_boot_by_cation[cation]

@@ -101,13 +101,13 @@ def build_tracer_resolvability_df(
     soil_mass_per_ha_kg = mean_bd_kg_m3 * sampling_depth_cm * 100
     soil_mass_kg = soil_mass_per_ha_kg * area_ha
     feedstock_mass_kg = application_rate_kg_ha * area_ha
-    bl_tracer_values = baseline_samples[tracer_col].dropna().to_numpy()
+    baseline_tracer_values = baseline_samples[tracer_col].dropna().to_numpy()
 
     resolvability = calculate_tracer_resolvability(
         soil_mass_kg=soil_mass_kg,
         feedstock_mass_kg=feedstock_mass_kg,
         feedstock_tracer_mg_kg=feedstock_tracer_values,
-        baseline_treatment_tracer_mg_kg=bl_tracer_values,
+        baseline_treatment_tracer_mg_kg=baseline_tracer_values,
     )
     return pd.DataFrame([
         {
@@ -115,6 +115,6 @@ def build_tracer_resolvability_df(
             "resolvability_index": resolvability,
             "soil_mass_kg": soil_mass_kg,
             "feedstock_mass_kg": feedstock_mass_kg,
-            "n_baseline_samples": len(bl_tracer_values),
+            "n_baseline_samples": len(baseline_tracer_values),
         },
     ])

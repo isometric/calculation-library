@@ -49,7 +49,7 @@ def compute_control_correction_ratio(
 ) -> Np1DArray[np.floating]:
     """Compute ratio-based control correction from control plot cation concentrations.
 
-    cc = C_rp_ctrl / C_bl_ctrl
+    cc = C_reporting_period_ctrl / C_baseline_ctrl
 
     No clamping is applied so that full uncertainty propagates through the bootstrap.
     """
@@ -69,8 +69,8 @@ def bootstrap_control_correction_ratios(
     decides how to summarise it (e.g. ``np.percentile(ratios["Ca"], 50)``).
 
     Args:
-        ctrl_paired: Paired control DataFrame with ``bl_{col}`` and
-            ``rp_{col}`` columns for each element (as produced by
+        ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and
+            ``reporting_period_{col}`` columns for each element (as produced by
             ``pair_locations``).
         resampled_control_locations: Bootstrap location indices of shape
             ``(n_runs, n_locations)`` from ``generate_bootstrap_location_indices``.
@@ -80,11 +80,11 @@ def bootstrap_control_correction_ratios(
     for element in elements:
         col = mass_fraction_column_name(element)
         control_baseline_boot = compute_resampled_means_from_indices(
-            ctrl_paired[f"bl_{col}"].to_numpy(),
+            ctrl_paired[f"baseline_{col}"].to_numpy(),
             resampled_control_locations,
         )
         control_reporting_period_boot = compute_resampled_means_from_indices(
-            ctrl_paired[f"rp_{col}"].to_numpy(),
+            ctrl_paired[f"reporting_period_{col}"].to_numpy(),
             resampled_control_locations,
         )
         ratios[element] = compute_control_correction_ratio(
@@ -144,7 +144,7 @@ def apply_control_correction_delta_paired(
     across all cases.
 
     Args:
-        ctrl_paired: Paired control DataFrame with ``bl_{col}`` and ``rp_{col}``
+        ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and ``reporting_period_{col}``
             columns for each element.
         elements: Elements to process (e.g. ``["Ca", "Mg"]``).
         rng: Random number generator for bootstrap resampling.
@@ -172,16 +172,16 @@ def apply_control_correction_delta_paired(
     for result in significance_results:
         if result.is_significant:
             col = mass_fraction_column_name(result.element)
-            bl_boot = compute_resampled_means_from_indices(
-                ctrl_paired_finite[f"bl_{col}"].to_numpy(),
+            baseline_boot = compute_resampled_means_from_indices(
+                ctrl_paired_finite[f"baseline_{col}"].to_numpy(),
                 resampled_indices,
             )
-            rp_boot = compute_resampled_means_from_indices(
-                ctrl_paired_finite[f"rp_{col}"].to_numpy(),
+            reporting_period_boot = compute_resampled_means_from_indices(
+                ctrl_paired_finite[f"reporting_period_{col}"].to_numpy(),
                 resampled_indices,
             )
-            # Additive delta: background change = rp - bl (may be positive or negative)
-            cc_dist = rp_boot - bl_boot
+            # Additive delta: background change = reporting_period - baseline (may be positive or negative)
+            cc_dist = reporting_period_boot - baseline_boot
             if floor_at_zero:
                 cc_dist = np.maximum(cc_dist, 0.0)
         else:
@@ -219,7 +219,7 @@ def apply_control_correction_delta_unpaired(
 
     If the one-sided Welch's t-test is significant (control reporting period < control baseline),
     bootstraps the full delta distribution by independently resampling control reporting period and
-    control baseline populations. delta = mean(baseline_resamp) - mean(rp_resamp), optionally
+    control baseline populations. delta = mean(baseline_resamp) - mean(reporting_period_resamp), optionally
     floored at 0.0 to prevent any single bootstrap run from inflating CDR.
 
     To apply the correction: add ``cc_delta_distribution`` to the reporting period soil concentration

@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.35.0](https://github.com/isometric/calculation-library/releases/tag/v0.35.0)
+
+### Changed
+
+- Renamed baseline / reporting-period column prefixes from `bl_`/`rp_` to `baseline_`/`reporting_period_` across pairing and all consumers. No aliases retained.
+
 ## [0.34.5](https://github.com/isometric/calculation-library/releases/tag/v0.34.5)
 
 ### Changed

@@ -20,7 +20,7 @@ from isometric_calculation_library.enhanced_weathering.utils.resampling import (
 
 
 def test_control_correction_ratio() -> None:
-    """cc = C_rp_ctrl / C_bl_ctrl."""
+    """cc = C_reporting_period_ctrl / C_baseline_ctrl."""
     result = compute_control_correction_ratio(
         control_baseline_mg_kg=np.array([100.0, 200.0]),
         control_end_of_reporting_period_mg_kg=np.array([90.0, 210.0]),
@@ -33,10 +33,10 @@ def test_bootstrap_ratios_stable_control() -> None:
     rng = np.random.default_rng(42)
     n_locations = 20
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "bl_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
-        "rp_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "rp_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
+        "baseline_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
+        "reporting_period_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
     })
     indices = generate_bootstrap_location_indices(rng, n_locations, 10_000)
 
@@ -58,8 +58,8 @@ def test_bootstrap_ratios_shifted_control() -> None:
     rng = np.random.default_rng(42)
     n_locations = 30
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": np.full(n_locations, 200.0),
-        "rp_mass_fraction_ca": np.full(n_locations, 220.0),
+        "baseline_mass_fraction_ca": np.full(n_locations, 200.0),
+        "reporting_period_mass_fraction_ca": np.full(n_locations, 220.0),
     })
     indices = generate_bootstrap_location_indices(rng, n_locations, 10_000)
 
@@ -79,8 +79,8 @@ def test_bootstrap_ratios_returns_distributions() -> None:
     n_locations = 20
     n_runs = 5_000
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "rp_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
     })
     indices = generate_bootstrap_location_indices(rng, n_locations, n_runs)
 
@@ -101,10 +101,10 @@ def test_background_weathering_not_significant_for_stable_controls() -> None:
     rng = np.random.default_rng(42)
     n = 30
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, size=n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, size=n),
-        "bl_mass_fraction_mg": rng.normal(150, 4, size=n),
-        "rp_mass_fraction_mg": rng.normal(150, 4, size=n),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, size=n),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, size=n),
+        "baseline_mass_fraction_mg": rng.normal(150, 4, size=n),
+        "reporting_period_mass_fraction_mg": rng.normal(150, 4, size=n),
         "measurement_location_reference_id": [f"loc_{i}" for i in range(n)],
     })
 
@@ -127,8 +127,8 @@ def test_background_weathering_significant_for_shifted_controls() -> None:
     bl = np.full(n, 200.0)
     rp = np.full(n, 220.0)  # 10% increase
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": bl,
-        "rp_mass_fraction_ca": rp,
+        "baseline_mass_fraction_ca": bl,
+        "reporting_period_mass_fraction_ca": rp,
     })
 
     results = check_background_weathering_significance_paired(
@@ -146,8 +146,8 @@ def test_background_weathering_significant_for_shifted_controls() -> None:
 def test_background_weathering_too_few_pairs_raises() -> None:
     """Fewer than 3 paired locations → ValueError."""
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": [100.0, 200.0],
-        "rp_mass_fraction_ca": [110.0, 190.0],
+        "baseline_mass_fraction_ca": [100.0, 200.0],
+        "reporting_period_mass_fraction_ca": [110.0, 190.0],
     })
 
     with pytest.raises(ValueError, match="at least 3 are required"):
@@ -157,18 +157,18 @@ def test_background_weathering_too_few_pairs_raises() -> None:
 def test_background_weathering_missing_columns_raises() -> None:
     """Missing columns → ValueError with a clear message."""
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": [100.0, 200.0, 300.0],
+        "baseline_mass_fraction_ca": [100.0, 200.0, 300.0],
     })
 
-    with pytest.raises(ValueError, match="rp_mass_fraction_ca"):
+    with pytest.raises(ValueError, match="reporting_period_mass_fraction_ca"):
         check_background_weathering_significance_paired(ctrl_paired=ctrl_paired, elements=["Ca"])
 
 
 def test_background_weathering_nan_handling() -> None:
     """NaN values are excluded from pairing."""
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": [100.0, 200.0, np.nan, 400.0, 500.0],
-        "rp_mass_fraction_ca": [100.0, np.nan, 300.0, 400.0, 500.0],
+        "baseline_mass_fraction_ca": [100.0, 200.0, np.nan, 400.0, 500.0],
+        "reporting_period_mass_fraction_ca": [100.0, np.nan, 300.0, 400.0, 500.0],
     })
 
     results = check_background_weathering_significance_paired(
@@ -304,8 +304,8 @@ def test_apply_control_correction_paired_not_significant_returns_zeros() -> None
     rng = np.random.default_rng(42)
     n = 30
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, n),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -322,12 +322,12 @@ def test_apply_control_correction_paired_not_significant_returns_zeros() -> None
 
 
 def test_apply_control_correction_paired_significant_returns_distribution() -> None:
-    """Significant → delta distribution centred near rp_mean - bl_mean."""
+    """Significant → delta distribution centred near reporting_period_mean - baseline_mean."""
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(200, 5, n),
-        "rp_mass_fraction_ca": rng.normal(220, 5, n),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(220, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -349,8 +349,12 @@ def test_apply_control_correction_paired_floor_at_zero() -> None:
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(220, 5, n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, n),  # rp < bl → raw delta would be negative
+        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(
+            200,
+            5,
+            n,
+        ),  # reporting_period < baseline → raw delta would be negative
     })
 
     results = apply_control_correction_delta_paired(
@@ -371,8 +375,8 @@ def test_apply_control_correction_paired_no_floor() -> None:
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "bl_mass_fraction_ca": rng.normal(220, 5, n),
-        "rp_mass_fraction_ca": rng.normal(200, 5, n),
+        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -385,7 +389,7 @@ def test_apply_control_correction_paired_no_floor() -> None:
 
     r = results[0]
     assert r.is_significant is True
-    # With no floor and rp < bl, delta = rp - bl is negative
+    # With no floor and reporting_period < baseline, delta = reporting_period - baseline is negative
     assert float(r.cc_delta_distribution.max()) < 0.0
 
 
@@ -414,7 +418,7 @@ def test_apply_control_correction_unpaired_not_significant_returns_zeros() -> No
 
 
 def test_apply_control_correction_unpaired_significant_returns_distribution() -> None:
-    """Significant → delta distribution centred near baseline_mean - rp_mean."""
+    """Significant → delta distribution centred near baseline_mean - reporting_period_mean."""
     rng = np.random.default_rng(42)
     n = 60
     control_rp = pd.DataFrame({"mass_fraction_ca": rng.normal(180, 5, n)})

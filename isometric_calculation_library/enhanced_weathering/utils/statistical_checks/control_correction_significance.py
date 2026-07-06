@@ -58,7 +58,7 @@ def check_background_weathering_significance_paired(
     baseline and reporting period.
 
     Args:
-        ctrl_paired: Paired control DataFrame with ``bl_{col}`` and ``rp_{col}``
+        ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and ``reporting_period_{col}``
             columns (as produced by ``pair_locations``).
         elements: Element names to test (e.g. ``["Ca", "Mg"]``).
         alpha: Significance level for the two-sided test.
@@ -66,8 +66,8 @@ def check_background_weathering_significance_paired(
     results = list[ControlPlotAlkalinityChangeSignificanceTest]()
     for element in elements:
         col = mass_fraction_column_name(element)
-        baseline_col = f"bl_{col}"
-        reporting_period_col = f"rp_{col}"
+        baseline_col = f"baseline_{col}"
+        reporting_period_col = f"reporting_period_{col}"
 
         missing = [c for c in (baseline_col, reporting_period_col) if c not in ctrl_paired.columns]
         if missing:

@@ -82,27 +82,29 @@ def assign_and_split_by_plot_type(
             the same columns.
         plots: Plot geometries with ``Type`` and ``Geometry`` columns.
     """
-    bl_assigned = assign_area_type(baseline_samples, plots)
-    rp_assigned = assign_area_type(reporting_period_samples, plots)
+    baseline_assigned = assign_area_type(baseline_samples, plots)
+    reporting_period_assigned = assign_area_type(reporting_period_samples, plots)
 
-    n_bl_unassigned = int(bl_assigned["plot_type"].isna().sum())
-    n_rp_unassigned = int(rp_assigned["plot_type"].isna().sum())
+    n_baseline_unassigned = int(baseline_assigned["plot_type"].isna().sum())
+    n_reporting_period_unassigned = int(reporting_period_assigned["plot_type"].isna().sum())
 
-    bl_clean = bl_assigned.dropna(subset=["plot_type"])
-    rp_clean = rp_assigned.dropna(subset=["plot_type"])
+    baseline_clean = baseline_assigned.dropna(subset=["plot_type"])
+    reporting_period_clean = reporting_period_assigned.dropna(subset=["plot_type"])
 
-    plot_types = set(bl_clean["plot_type"].unique()) | set(rp_clean["plot_type"].unique())
+    plot_types = set(baseline_clean["plot_type"].unique()) | set(
+        reporting_period_clean["plot_type"].unique(),
+    )
 
     splits = dict[PlotType, tuple[pd.DataFrame, pd.DataFrame]]()
     for plot_type in sorted(plot_types):
         splits[plot_type] = (
-            bl_clean[bl_clean["plot_type"] == plot_type],
-            rp_clean[rp_clean["plot_type"] == plot_type],
+            baseline_clean[baseline_clean["plot_type"] == plot_type],
+            reporting_period_clean[reporting_period_clean["plot_type"] == plot_type],
         )
     return SplitByPlotTypeResult(
         splits=splits,
-        n_baseline_unassigned=n_bl_unassigned,
-        n_reporting_period_unassigned=n_rp_unassigned,
+        n_baseline_unassigned=n_baseline_unassigned,
+        n_reporting_period_unassigned=n_reporting_period_unassigned,
     )
 
 

@@ -50,8 +50,8 @@ def test_pair_locations_averages_duplicates() -> None:
     result = pair_locations(baseline, rp, value_columns=["mass_fraction_ca"])
 
     assert len(result.paired) == 1
-    assert result.paired["bl_mass_fraction_ca"].iloc[0] == pytest.approx(150.0)
-    assert result.paired["rp_mass_fraction_ca"].iloc[0] == pytest.approx(300.0)
+    assert result.paired["baseline_mass_fraction_ca"].iloc[0] == pytest.approx(150.0)
+    assert result.paired["reporting_period_mass_fraction_ca"].iloc[0] == pytest.approx(300.0)
 
 
 def test_pair_locations_no_overlap() -> None:
@@ -86,5 +86,5 @@ def test_pair_locations_multiple_columns() -> None:
     )
 
     assert len(result.paired) == 2
-    assert "bl_mass_fraction_ca" in result.paired.columns
-    assert "rp_mass_fraction_mg" in result.paired.columns
+    assert "baseline_mass_fraction_ca" in result.paired.columns
+    assert "reporting_period_mass_fraction_mg" in result.paired.columns
