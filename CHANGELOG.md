@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.34.4](https://github.com/isometric/calculation-library/releases/tag/v0.34.4)
+
+### Changed
+
+- `CHANGELOG.md`: non-material formatting change
+
 ## [0.34.3](https://github.com/isometric/calculation-library/releases/tag/v0.34.3)
 
 ### Changed
@@ -496,4 +502,3 @@ Internal improvements only, no changes to public-facing functionality.
 
 - Initial public release: package scaffolding only (`pyproject.toml`, license, empty `calculations` module); no public calculation modules yet
 - `dependencies` — re-exports `geopandas`, `numpy`, `pandas`, `shapely` so downstream code only needs to pin this library's version
-
