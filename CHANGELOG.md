@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.36.0](https://github.com/isometric/calculation-library/releases/tag/v0.36.0)
+
+### Added
+
+- `enhanced_weathering.utils.statistical_checks.multiple_testing`: `benjamini_hochberg`, `permutation_test_median_difference` - promoted shared multiple-testing correction and permutation-test utilities previously duplicated across models and geospatial `spatial_autocorrelation`
+
 ## [0.35.0](https://github.com/isometric/calculation-library/releases/tag/v0.35.0)
 
 ### Changed

@@ -21,7 +21,9 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
 
-from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.multiple_testing import (
+    benjamini_hochberg,
+)
 
 _METERS_PER_DEGREE = 111_000
 """Approximate metres per degree of latitude (and longitude at equator)."""
@@ -191,7 +193,7 @@ def compute_morans_i_permutation_test(
 
     # Benjamini-Hochberg correction
     p_values = np.array([r[5] for r in raw_results])
-    bh_adjusted = _benjamini_hochberg(p_values)
+    bh_adjusted = benjamini_hochberg(p_values)
 
     results = list[MoransIResult]()
     for i, (var, obs_i, exp_i, std_i, z, _raw_p) in enumerate(raw_results):
@@ -210,28 +212,6 @@ def compute_morans_i_permutation_test(
         )
 
     return results
-
-
-def _benjamini_hochberg(p_values: Np1DArray[np.floating]) -> Np1DArray[np.floating]:
-    """Apply Benjamini-Hochberg FDR correction to p-values."""
-    n_tests = len(p_values)
-    if n_tests == 0:
-        return p_values.copy()
-
-    sorted_indices = np.argsort(p_values)
-    bh_adjusted = np.empty(n_tests)
-
-    for rank_idx, orig_idx in enumerate(sorted_indices):
-        rank = rank_idx + 1
-        bh_adjusted[orig_idx] = p_values[orig_idx] * n_tests / rank
-
-    # Enforce monotonicity (step down from largest rank)
-    for i in range(n_tests - 2, -1, -1):
-        idx = sorted_indices[i]
-        idx_next = sorted_indices[i + 1]
-        bh_adjusted[idx] = min(bh_adjusted[idx], bh_adjusted[idx_next])
-
-    return np.clip(bh_adjusted, 0.0, 1.0)
 
 
 def compute_neff_from_morans_i(

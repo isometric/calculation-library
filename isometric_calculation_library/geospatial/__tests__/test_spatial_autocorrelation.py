@@ -9,7 +9,6 @@ import pytest
 from isometric_calculation_library.geospatial.spatial_autocorrelation import (
     MoransIResult,
     NeffResult,
-    _benjamini_hochberg,  # pyright: ignore[reportPrivateUsage]
     _build_inverse_distance_weights,  # pyright: ignore[reportPrivateUsage]
     _compute_morans_i,  # pyright: ignore[reportPrivateUsage]
     compute_morans_i_permutation_test,
@@ -159,31 +158,6 @@ def test_permutation_test_random_data_not_significant() -> None:
     )
 
     assert results[0].significant is False
-
-
-# -- _benjamini_hochberg -------------------------------------------------------
-
-
-def test_bh_single_p_value_unchanged() -> None:
-    result = _benjamini_hochberg(np.array([0.03]))
-    assert result[0] == pytest.approx(0.03)
-
-
-def test_bh_monotonicity() -> None:
-    """Adjusted p-values should be non-decreasing when sorted by raw p."""
-    p_values = np.array([0.001, 0.01, 0.03, 0.04, 0.1])
-    adjusted = _benjamini_hochberg(p_values)
-
-    sorted_idx = np.argsort(p_values)
-    adj_sorted = adjusted[sorted_idx]
-    assert all(adj_sorted[i] <= adj_sorted[i + 1] for i in range(len(adj_sorted) - 1))
-
-
-def test_bh_clipped_to_one() -> None:
-    p_values = np.array([0.8, 0.9, 0.95])
-    adjusted = _benjamini_hochberg(p_values)
-
-    assert all(a <= 1.0 for a in adjusted)
 
 
 # -- compute_neff_from_morans_i ------------------------------------------------
