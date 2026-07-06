@@ -6,10 +6,27 @@ import numpy as np
 import pytest
 
 from isometric_calculation_library.enhanced_weathering.utils.conversions import (
+    convert_cation_kg_to_charge_equivalents,
     convert_cation_kg_to_co2_kg,
     convert_kg_ha_to_mg_kg,
     convert_mg_kg_to_kg_ha,
 )
+from isometric_calculation_library.utils.elements import atomic_weight
+
+
+def test_cation_kg_to_charge_equivalents_ca() -> None:
+    """1 kg Ca = (1000 g / molar_mass) * charge 2 equivalents."""
+    result = convert_cation_kg_to_charge_equivalents(cation_kg=np.array([1.0]), cation="Ca")
+    expected = 1.0 / (atomic_weight("Ca") / 1000) * 2
+    assert result[0] == pytest.approx(expected)
+
+
+def test_cation_kg_to_charge_equivalents_scales_linearly() -> None:
+    result = convert_cation_kg_to_charge_equivalents(
+        cation_kg=np.array([1.0, 2.0, 4.0]),
+        cation="Mg",
+    )
+    np.testing.assert_allclose(result / result[0], [1.0, 2.0, 4.0])
 
 
 def test_mg_kg_to_kg_ha_single_value() -> None:

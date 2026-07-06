@@ -61,3 +61,19 @@ def convert_cation_kg_to_co2_kg(
     molar_mass = atomic_weight(cation)
     charge = _cation_to_charge(cation)
     return cation_kg * charge * MOLAR_MASS_CO2 / molar_mass
+
+
+def convert_cation_kg_to_charge_equivalents(
+    *,
+    cation_kg: Np1DArray[np.floating],
+    cation: Cation,
+) -> Np1DArray[np.floating]:
+    """Convert cation mass (kg) to charge equivalents (mol of charge).
+
+    equivalents = (mass / molar_mass) * charge, i.e. moles of the cation times
+    its ionic valence. Expresses alkalinity contributions on a common charge
+    basis across cations.
+    """
+    molar_mass_kg_per_mol = atomic_weight(cation) / 1000
+    charge = _cation_to_charge(cation)
+    return cation_kg / molar_mass_kg_per_mol * charge
