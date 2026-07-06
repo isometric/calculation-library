@@ -10,7 +10,7 @@ import numpy as np
 
 from isometric_calculation_library.biosphere.allometric_equations.chave import ChaveModel
 from isometric_calculation_library.biosphere.constants import CO2_TO_CARBON_RATIO, M2_PER_HECTARE
-from isometric_calculation_library.biosphere.types import Np1DArray
+from isometric_calculation_library.utils.types import Np1DArray
 
 
 @dataclass(frozen=True)

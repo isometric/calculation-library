@@ -17,7 +17,7 @@ from typing import NamedTuple
 import numpy as np
 import pandas as pd
 
-from .types import Np1DArray
+from isometric_calculation_library.utils.types import Np1DArray
 
 
 def compute_weighted_feedstock_composition(

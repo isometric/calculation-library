@@ -24,11 +24,10 @@ from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.
     check_background_weathering_significance_unpaired,
 )
 from isometric_calculation_library.enhanced_weathering.utils.types import (
-    Np1DArray,
-    Np2DArray,
     mass_fraction_column_name,
 )
 from isometric_calculation_library.utils.elements import ElementSymbol
+from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
 __all__ = [
     "ControlCorrectionDeltaResult",

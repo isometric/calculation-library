@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.37.1](https://github.com/isometric/calculation-library/releases/tag/v0.37.1)
+
+### Changed
+
+- Consolidated the `Np1DArray` / `Np2DArray` numpy array type aliases into `utils.types`, removing the duplicate definitions previously in `biosphere.types` and `enhanced_weathering.utils.types`.
+
 ## [0.37.0](https://github.com/isometric/calculation-library/releases/tag/v0.37.0)
 
 ### Added

@@ -14,7 +14,6 @@ Allometric model error is handled by the allometric model classes themselves
 
 import numpy as np
 
-from isometric_calculation_library.biosphere.types import Np1DArray, Np2DArray
 from isometric_calculation_library.biosphere.utils.clipped_normal import clipped_normal
 from isometric_calculation_library.biosphere.utils.dbh import (
     DBH_CLIP_MAX_CM,
@@ -26,6 +25,7 @@ from isometric_calculation_library.biosphere.utils.height import (
     HEIGHT_CLIP_MIN_M,
     perturb_height,
 )
+from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
 DBH_HEIGHT_ERROR_CORRELATION = 0.74
 """Correlation between DBH and height measurement errors (Chave et al. 2004)."""

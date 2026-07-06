@@ -51,9 +51,9 @@ from isometric_calculation_library.enhanced_weathering.utils.tracer import (
     compute_post_application_concentration,
 )
 from isometric_calculation_library.enhanced_weathering.utils.types import (
-    Np1DArray,
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils.types import Np1DArray
 
 type _Cation = Literal["Ca", "Mg"]
 _CATIONS: list[_Cation] = ["Ca", "Mg"]

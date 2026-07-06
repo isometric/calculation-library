@@ -2,8 +2,6 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
-"""Numpy array type aliases for biosphere calculations."""
-
 import numpy as np
 
 type Np1DArray[T: np.generic] = np.ndarray[tuple[int], np.dtype[T]]

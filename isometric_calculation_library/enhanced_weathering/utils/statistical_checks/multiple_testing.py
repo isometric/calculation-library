@@ -14,7 +14,7 @@ from typing import Literal
 
 import numpy as np
 
-from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
+from isometric_calculation_library.utils.types import Np1DArray
 
 
 def benjamini_hochberg(p_values: Np1DArray[np.floating]) -> Np1DArray[np.floating]:

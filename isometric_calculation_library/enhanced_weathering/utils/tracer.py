@@ -6,7 +6,7 @@ from typing import Literal
 
 import numpy as np
 
-from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
+from isometric_calculation_library.utils.types import Np1DArray
 
 type ImmobileTracer = Literal["Zr", "Ti"]
 """Immobile tracer elements used for feedstock-soil mass balance."""

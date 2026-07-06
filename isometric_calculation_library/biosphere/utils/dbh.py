@@ -7,7 +7,7 @@
 import numpy as np
 
 from isometric_calculation_library.biosphere.constants import DBH_ERROR_INTERCEPT, DBH_ERROR_SLOPE
-from isometric_calculation_library.biosphere.types import Np1DArray, Np2DArray
+from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
 from .clipped_normal import clipped_normal
 

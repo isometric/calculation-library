@@ -11,7 +11,7 @@ from isometric_calculation_library.enhanced_weathering.utils.conversions import 
     convert_cation_kg_to_co2_kg,
     convert_mg_kg_to_kg_ha,
 )
-from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
+from isometric_calculation_library.utils.types import Np1DArray
 
 
 def compute_cation_stock_kg_ha(

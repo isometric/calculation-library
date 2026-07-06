@@ -6,8 +6,8 @@ from typing import Literal
 
 import numpy as np
 
-from isometric_calculation_library.enhanced_weathering.utils.types import Np1DArray
 from isometric_calculation_library.utils.elements import atomic_weight
+from isometric_calculation_library.utils.types import Np1DArray
 
 Cation = Literal["Ca", "Mg"]
 

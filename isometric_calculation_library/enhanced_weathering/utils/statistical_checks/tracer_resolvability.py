@@ -10,9 +10,9 @@ import pandas as pd
 from isometric_calculation_library.enhanced_weathering.utils.spatial import PlotType
 from isometric_calculation_library.enhanced_weathering.utils.tracer import ImmobileTracer
 from isometric_calculation_library.enhanced_weathering.utils.types import (
-    Np1DArray,
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils.types import Np1DArray
 
 
 def calculate_tracer_resolvability(
