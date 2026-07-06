@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.34.5](https://github.com/isometric/calculation-library/releases/tag/v0.34.5)
+
+### Changed
+
+- `biosphere.constants`: `CO2_TO_CARBON_RATIO` - derived from the centralized `atomic_weight()` helper instead of hardcoded literals. Small numerical differences in results are expected, but they are not significant.
+
 ## [0.34.4](https://github.com/isometric/calculation-library/releases/tag/v0.34.4)
 
 ### Changed
@@ -287,7 +293,7 @@ Dependency version update.
 ### Added
 
 - `biosphere.allometric_equations`: `chave` — Chave et al. pantropical biomass allometric equations; `wood_density` — global wood density lookup
-- `biosphere.constants`, `biosphere.types` — shared constants and domain types for biosphere calculations
+- `biosphere.constants`, `biosphere.types` - shared constants and domain types for biosphere calculations
 - `biosphere.monte_carlo`: `field_plot`, `inventory` — Monte Carlo uncertainty propagation for field plots and carbon inventories
 - `biosphere.utils`: `dbh`, `height`, `clipped_normal` — diameter at breast height, tree height utilities, and clipped-normal distribution
 
