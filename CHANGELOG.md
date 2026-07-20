@@ -2,6 +2,10 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.37.4](https://github.com/isometric/calculation-library/releases/tag/v0.37.4)
+
+Dependency version update.
+
 ## [0.37.3](https://github.com/isometric/calculation-library/releases/tag/v0.37.3)
 
 Dependency version update.
