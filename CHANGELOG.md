@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.37.7](https://github.com/isometric/calculation-library/releases/tag/v0.37.7)
+
+### Added
+
+- Added `scikit-learn` as a dependency
+
 ## [0.37.6](https://github.com/isometric/calculation-library/releases/tag/v0.37.6)
 
 Dependency version update.

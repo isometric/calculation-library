@@ -24,6 +24,7 @@ dependencies = [
   "pandas==3.0.3",
   "pyproj==3.7.2",
   "rasterio==1.5.0",
+  "scikit-learn==1.9.0",
   "scipy==1.18.0",
   "shapely==2.1.2",
   "statsmodels==0.14.6",
@@ -34,7 +35,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.37.6"
+version = "0.37.7"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
