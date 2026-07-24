@@ -2,6 +2,14 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.38.0](https://github.com/isometric/calculation-library/releases/tag/v0.38.0)
+
+### Added
+
+- `biosphere.reforestation_dynamic_baselining.spectral_matcher`: `SpectralMatcher` - donor-pixel k-NN spectral matching for dynamic baselining
+- `biosphere.reforestation_dynamic_baselining.performance_benchmark_calculator`: `perform_paired_ttest`, `calculate_intra_plot_difference` - paired t-test and intra-plot difference benchmarking against matched donor pixels
+- `biosphere.utils.raster`: `sample_raster_vectorized` - vectorized raster sampling at WGS84 coordinates
+
 ## [0.37.7](https://github.com/isometric/calculation-library/releases/tag/v0.37.7)
 
 ### Added
