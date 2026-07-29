@@ -6,7 +6,8 @@
 
 Uses per-location immobile Ti tracer mixing ratio to estimate feedstock
 contribution. CDR is computed as fraction_dissolved x known application rate
-for each cation (Ca, Mg), with ratio-based control correction (p50).
+for each cation (Ca, Mg, Na, K), with an additive control correction. Sodium and
+potassium are monovalent, so they capture half the CO2 per mole of the divalent pair.
 
 Total CDR is scaled by treatment area only (no deployment plots).
 No outlier handling is applied. Reported at p16.
@@ -18,7 +19,7 @@ from isometric_calculation_library.dependencies import geopandas as gpd
 from isometric_calculation_library.dependencies import numpy as np
 from isometric_calculation_library.dependencies import pandas as pd
 from isometric_calculation_library.enhanced_weathering.utils.control_correction import (
-    bootstrap_control_correction_ratios,
+    apply_control_correction_delta_paired,
 )
 from isometric_calculation_library.enhanced_weathering.utils.conversions import (
     convert_cation_kg_to_co2_kg,
@@ -55,8 +56,8 @@ from isometric_calculation_library.enhanced_weathering.utils.types import (
 )
 from isometric_calculation_library.utils.types import Np1DArray
 
-type _Cation = Literal["Ca", "Mg"]
-_CATIONS: list[_Cation] = ["Ca", "Mg"]
+type _Cation = Literal["Ca", "Mg", "Na", "K"]
+_CATIONS: list[_Cation] = ["Ca", "Mg", "Na", "K"]
 _N_BOOTSTRAP_RUNS = 200_000
 _SEED = 42
 _SAMPLING_DEPTH_CM = 30.0
@@ -126,40 +127,41 @@ def _compute_application_rate_diagnostic(
     return app_rate_boot, application_rate_check
 
 
-def _compute_control_correction_ratios(
+def _compute_control_correction_deltas(
     control_baseline: pd.DataFrame,
     control_reporting_period: pd.DataFrame,
     value_columns: list[str],
     cations: list[_Cation],
     rng: np.random.Generator,
     n_bootstrap_runs: int,
-) -> tuple[dict[_Cation, float], int, int, int]:
-    """Compute ratio-based control correction (p50) for each cation.
+) -> tuple[dict[_Cation, Np1DArray[np.floating]], int, int, int]:
+    """Compute the additive control-correction delta distribution for each cation.
 
     Returns:
-        Tuple of (control_correction_ratio_p50, n_control_paired,
+        Tuple of (control_correction_delta, n_control_paired,
         n_control_baseline_only, n_control_reporting_period_only).
     """
     control_pairing = pair_locations(control_baseline, control_reporting_period, value_columns)
     control_paired = control_pairing.paired
     n_control = len(control_paired)
-    resampled_control_locations = generate_bootstrap_location_indices(
-        rng,
-        n_control,
-        n_bootstrap_runs,
-    )
-    control_correction_distributions = bootstrap_control_correction_ratios(
+    results = apply_control_correction_delta_paired(
         ctrl_paired=control_paired,
-        resampled_control_locations=resampled_control_locations,
         elements=cations,
+        rng=rng,
+        n_runs=n_bootstrap_runs,
     )
-    # Elements passed in are _Cation values, so the result keys are _Cation.
-    control_correction_ratio_p50 = {
-        element: float(np.percentile(dist, 50))
-        for element, dist in control_correction_distributions.items()
-    }
+    control_correction_delta = dict[_Cation, Np1DArray[np.floating]]()
+    for result in results:
+        match result.element:
+            case "Ca" | "Mg" | "Na" | "K" as cation:
+                control_correction_delta[cation] = result.cc_delta_distribution
+            case _:
+                # Unreachable: results come back keyed by the elements we passed in, which
+                # are always _CATIONS. The branch only exists to narrow ElementSymbol (any
+                # element) down to _Cation for the dict key.
+                continue
     return (
-        control_correction_ratio_p50,  # pyright: ignore[reportReturnType]
+        control_correction_delta,
         n_control,
         control_pairing.n_baseline_only,
         control_pairing.n_reporting_period_only,
@@ -184,19 +186,21 @@ def main(
 
     Uses immobile Ti tracer mass balance to estimate the feedstock-to-soil
     mixing ratio at each paired location, then computes the fraction of
-    feedstock cations (Ca, Mg) that dissolved. CDR is derived from the
-    dissolved fraction and a known application rate, with ratio-based
-    control correction (p50). No outlier handling is applied.
+    feedstock cations (Ca, Mg, Na, K) that dissolved. CDR is derived from the
+    dissolved fraction and a known application rate, with an additive
+    control correction. No outlier handling is applied.
 
     Args:
         baseline_samples: Baseline (pre-application) soil samples. DataFrame
             with columns ``mass_fraction_ca``, ``mass_fraction_mg``,
-            ``mass_fraction_ti`` (all in mg/kg), ``latitude``, ``longitude``,
-            and ``measurement_location_reference_id``.
+            ``mass_fraction_na``, ``mass_fraction_k``, ``mass_fraction_ti``
+            (all in mg/kg), ``latitude``, ``longitude``, and
+            ``measurement_location_reference_id``.
         reporting_period_samples: End-of-reporting-period soil samples.
             Same columns as ``baseline_samples``.
         feedstock_samples: Feedstock geochemistry samples. DataFrame with
-            columns ``mass_fraction_ca``, ``mass_fraction_mg``, and
+            columns ``mass_fraction_ca``, ``mass_fraction_mg``,
+            ``mass_fraction_na``, ``mass_fraction_k``, and
             ``mass_fraction_ti`` (all in mg/kg).
         bulk_density_samples_kg_m3: Field bulk density measurements. DataFrame
             with a ``bulk_density`` column in kg/m3.
@@ -275,9 +279,10 @@ def main(
         )
 
     tracer_col = mass_fraction_column_name(_TRACER)
-    ca_col = mass_fraction_column_name("Ca")
-    mg_col = mass_fraction_column_name("Mg")
-    value_columns = [tracer_col, ca_col, mg_col]
+    cation_cols: dict[_Cation, str] = {
+        cation: mass_fraction_column_name(cation) for cation in _CATIONS
+    }
+    value_columns = [tracer_col, *cation_cols.values()]
 
     feedstock_tracer_values = feedstock_samples[tracer_col].dropna().to_numpy()
 
@@ -299,17 +304,21 @@ def main(
         _N_BOOTSTRAP_RUNS,
     )
     feedstock_boot_by_cation: dict[_Cation, Np1DArray[np.floating]] = {
-        "Ca": resample_mean(rng, feedstock_samples[ca_col].dropna().to_numpy(), _N_BOOTSTRAP_RUNS),
-        "Mg": resample_mean(rng, feedstock_samples[mg_col].dropna().to_numpy(), _N_BOOTSTRAP_RUNS),
+        cation: resample_mean(
+            rng,
+            feedstock_samples[col].dropna().to_numpy(),
+            _N_BOOTSTRAP_RUNS,
+        )
+        for cation, col in cation_cols.items()
     }
 
-    # Control correction (ratio p50)
+    # Control correction (additive delta)
     (
-        control_correction_ratio_p50,
+        control_correction_delta,
         n_control,
         n_control_baseline_only,
         n_control_reporting_period_only,
-    ) = _compute_control_correction_ratios(
+    ) = _compute_control_correction_deltas(
         control_baseline=control_baseline,
         control_reporting_period=control_reporting_period,
         value_columns=value_columns,
@@ -408,7 +417,7 @@ def main(
             post_application_concentration_mg_kg=cation_post_application_concentration,
             soil_end_of_reporting_period_mg_kg=cation_reporting_period_boot,
             feedstock_mg_kg=feedstock_boot,
-            control_correction_ratio=control_correction_ratio_p50[cation],
+            control_correction_delta_mg_kg=control_correction_delta[cation],
         )
 
         cdr_cation_kg_ha = fraction_dissolved * known_application_rate_kg_ha * feedstock_boot / 1e6

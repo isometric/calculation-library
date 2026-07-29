@@ -9,19 +9,23 @@ import numpy as np
 from isometric_calculation_library.utils.elements import atomic_weight
 from isometric_calculation_library.utils.types import Np1DArray
 
-Cation = Literal["Ca", "Mg"]
+Cation = Literal["Ca", "Mg", "Na", "K"]
 
 MOLAR_MASS_CO2 = atomic_weight("C") + 2 * atomic_weight("O")
 """Molar mass of CO2 in g/mol."""
 
 
 def _cation_to_charge(cation: Cation) -> int:
-    """Get ionic charge for a given cation."""
+    """Get ionic charge for a given cation.
+
+    Calcium and magnesium are divalent; sodium and potassium are monovalent, so they
+    capture half as much CO2 per mole.
+    """
     match cation:
-        case "Ca":
+        case "Ca" | "Mg":
             return 2
-        case "Mg":
-            return 2
+        case "Na" | "K":
+            return 1
 
 
 def convert_mg_kg_to_kg_ha(
@@ -55,8 +59,8 @@ def convert_cation_kg_to_co2_kg(
 ) -> Np1DArray[np.floating]:
     """Convert cation mass to CO2 mass equivalent.
 
-    Each mole of cation captures one mole of CO2 per unit of ionic charge,
-    so a divalent cation (Ca²⁺, Mg²⁺) corresponds to 2 moles of CO2.
+    Each mole of cation captures one mole of CO2 per unit of ionic charge, so a divalent
+    cation (Ca²⁺, Mg²⁺) corresponds to 2 moles of CO2 and a monovalent one (Na⁺, K⁺) to 1.
     """
     molar_mass = atomic_weight(cation)
     charge = _cation_to_charge(cation)

@@ -12,7 +12,7 @@ from scipy import stats
 
 from isometric_calculation_library.utils.types import Np1DArray
 
-from ._normality import check_normality
+from ._significance import check_normality
 
 
 @dataclass(frozen=True)

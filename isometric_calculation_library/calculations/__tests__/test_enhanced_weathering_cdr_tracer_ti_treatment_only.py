@@ -39,8 +39,16 @@ def _make_soil_samples(
     lon_base: float,
     prefix: str,
     rng: np.random.Generator,
+    na_mean: float | None = None,
+    k_mean: float | None = None,
 ) -> pd.DataFrame:
-    """Generate synthetic soil samples inside a plot region."""
+    """Generate synthetic soil samples inside a plot region.
+
+    Sodium and potassium default to fractions of the calcium mean so callers that only
+    care about the divalent pair don't have to specify them.
+    """
+    na_mean = ca_mean * 0.4 if na_mean is None else na_mean
+    k_mean = ca_mean * 0.3 if k_mean is None else k_mean
     rows = list[dict[str, object]]()
     for i in range(n_locations):
         rows.append({
@@ -50,6 +58,8 @@ def _make_soil_samples(
             "longitude": lon_base + rng.uniform(0, 0.005),
             "mass_fraction_ca": ca_mean + rng.normal(0, ca_mean * 0.05),
             "mass_fraction_mg": mg_mean + rng.normal(0, mg_mean * 0.05),
+            "mass_fraction_na": na_mean + rng.normal(0, na_mean * 0.05),
+            "mass_fraction_k": k_mean + rng.normal(0, k_mean * 0.05),
             "mass_fraction_ti": ti_mean + rng.normal(0, ti_mean * 0.05),
         })
     return pd.DataFrame(rows)
@@ -61,6 +71,8 @@ def _make_feedstock_samples(rng: np.random.Generator) -> pd.DataFrame:
     return pd.DataFrame({
         "mass_fraction_ca": rng.normal(50_000, 2000, size=n),
         "mass_fraction_mg": rng.normal(30_000, 1500, size=n),
+        "mass_fraction_na": rng.normal(12_000, 600, size=n),
+        "mass_fraction_k": rng.normal(8_000, 400, size=n),
         "mass_fraction_ti": rng.normal(5000, 200, size=n),
     })
 
@@ -272,7 +284,7 @@ def test_main_pairing_report_has_treatment_and_control() -> None:
     area_types = set(pairing["area_type"])
 
     assert area_types == {"treatment", "control"}
-    assert set(pairing["cation"]) == {"Ca", "Mg"}
+    assert set(pairing["cation"]) == {"Ca", "Mg", "Na", "K"}
 
 
 def test_main_tracer_resolvability_is_treatment_only() -> None:
@@ -307,7 +319,7 @@ def test_main_significance_tests_per_cation() -> None:
     )
 
     sig = result["intermediate_outputs"]["significance_test_results"]
-    assert set(sig["cation"]) == {"Ca", "Mg"}
+    assert set(sig["cation"]) == {"Ca", "Mg", "Na", "K"}
     assert all(sig["p_value"].between(0, 1))
 
 

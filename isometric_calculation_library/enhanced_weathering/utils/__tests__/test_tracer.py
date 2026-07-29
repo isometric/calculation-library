@@ -105,31 +105,93 @@ def test_fraction_dissolved_no_dissolution() -> None:
     assert result == pytest.approx([0.0])
 
 
-def test_fraction_dissolved_with_control_correction() -> None:
-    """Control correction scales the post-application concentration."""
+def test_fraction_dissolved_control_correction_delta_reduces_dissolution() -> None:
+    """A positive delta is background loss, so it must reduce the fraction dissolved."""
     m = np.array([0.01])
     c_feed = 5000.0
     c_post = (np.array([100.0]) + m * c_feed) / (1 + m)
-    c_rp = c_post * 0.95  # small decrease
-    cc = 1.0  # no background change
+    c_rp = c_post * 0.95
+    delta = 5.0
 
-    result_no_cc = compute_fraction_dissolved(
+    uncorrected = compute_fraction_dissolved(
+        feedstock_soil_mass_ratio=m,
+        post_application_concentration_mg_kg=c_post,
+        soil_end_of_reporting_period_mg_kg=c_rp,
+        feedstock_mg_kg=c_feed,
+    )
+    corrected = compute_fraction_dissolved(
+        feedstock_soil_mass_ratio=m,
+        post_application_concentration_mg_kg=c_post,
+        soil_end_of_reporting_period_mg_kg=c_rp,
+        feedstock_mg_kg=c_feed,
+        control_correction_delta_mg_kg=delta,
+    )
+
+    assert one(corrected) < one(uncorrected)
+    expected = ((1 + m) / m) * ((c_post - c_rp - delta) / c_feed)
+    np.testing.assert_allclose(corrected, expected)
+
+
+def test_fraction_dissolved_zero_delta_is_neutral() -> None:
+    """The default delta of 0.0 leaves the uncorrected result unchanged."""
+    m = np.array([0.01])
+    c_feed = 5000.0
+    c_post = (np.array([100.0]) + m * c_feed) / (1 + m)
+    c_rp = c_post * 0.95
+
+    np.testing.assert_allclose(
+        compute_fraction_dissolved(
+            feedstock_soil_mass_ratio=m,
+            post_application_concentration_mg_kg=c_post,
+            soil_end_of_reporting_period_mg_kg=c_rp,
+            feedstock_mg_kg=c_feed,
+        ),
+        compute_fraction_dissolved(
+            feedstock_soil_mass_ratio=m,
+            post_application_concentration_mg_kg=c_post,
+            soil_end_of_reporting_period_mg_kg=c_rp,
+            feedstock_mg_kg=c_feed,
+            control_correction_delta_mg_kg=0.0,
+        ),
+    )
+
+
+def test_fraction_dissolved_ratio_scales_post_application() -> None:
+    """The deprecated ratio form scales C_post, unchanged from its original behaviour."""
+    m = np.array([0.01])
+    c_feed = 5000.0
+    c_post = (np.array([100.0]) + m * c_feed) / (1 + m)
+    c_rp = np.array([120.0])
+    cc = 0.9
+
+    result = compute_fraction_dissolved(
         feedstock_soil_mass_ratio=m,
         post_application_concentration_mg_kg=c_post,
         soil_end_of_reporting_period_mg_kg=c_rp,
         feedstock_mg_kg=c_feed,
         control_correction_ratio=cc,
     )
-    # With cc > 1, it inflates post-app, so more dissolution is attributed
-    cc_inflated = 1.05
-    result_with_cc = compute_fraction_dissolved(
-        feedstock_soil_mass_ratio=m,
-        post_application_concentration_mg_kg=c_post,
-        soil_end_of_reporting_period_mg_kg=c_rp,
-        feedstock_mg_kg=c_feed,
-        control_correction_ratio=cc_inflated,
+
+    expected = ((1 + m) / m) * ((c_post * cc - c_rp) / c_feed)
+    np.testing.assert_allclose(result, expected)
+
+
+def test_fraction_dissolved_neutral_ratio_and_zero_delta_are_uncorrected() -> None:
+    """Both corrections default to neutral, so omitting them leaves f_d uncorrected."""
+    m = np.array([0.01])
+    c_feed = 5000.0
+    c_post = (np.array([100.0]) + m * c_feed) / (1 + m)
+    c_rp = np.array([120.0])
+
+    np.testing.assert_allclose(
+        compute_fraction_dissolved(
+            feedstock_soil_mass_ratio=m,
+            post_application_concentration_mg_kg=c_post,
+            soil_end_of_reporting_period_mg_kg=c_rp,
+            feedstock_mg_kg=c_feed,
+        ),
+        ((1 + m) / m) * ((c_post - c_rp) / c_feed),
     )
-    assert one(result_with_cc) > one(result_no_cc) + 1e-6
 
 
 def test_fraction_dissolved_inf_replaced_with_nan() -> None:

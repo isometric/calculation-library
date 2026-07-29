@@ -54,18 +54,30 @@ def compute_fraction_dissolved(
     post_application_concentration_mg_kg: Np1DArray[np.floating],
     soil_end_of_reporting_period_mg_kg: Np1DArray[np.floating],
     feedstock_mg_kg: float | Np1DArray[np.floating],
+    control_correction_delta_mg_kg: float | Np1DArray[np.floating] = 0.0,
     control_correction_ratio: float | Np1DArray[np.floating] = 1.0,
 ) -> Np1DArray[np.floating]:
     """Compute fraction of feedstock cation dissolved using immobile tracer method.
 
-    f_d = ((1 + m) / m) * (C_post * cc - C_rp) / C_feed
+    f_d = ((1 + m) / m) * (C_post * cc - C_rp - delta) / C_feed
+
+    ``control_correction_delta_mg_kg`` is the additive background loss measured in the
+    control plots, signed so that a positive delta means the control lost cations and
+    the correction therefore reduces the fraction dissolved. Pass the distribution from
+    ``apply_control_correction_delta_paired`` / ``_unpaired``.
+
+    ``control_correction_ratio`` is the older multiplicative form and is deprecated. Prefer
+    the delta.
 
     Infinite values (from m = 0 or C_feed = 0) are replaced with NaN.
     """
-    corrected_post_application = post_application_concentration_mg_kg * control_correction_ratio
-
     fraction_dissolved = ((1 + feedstock_soil_mass_ratio) / feedstock_soil_mass_ratio) * (
-        (corrected_post_application - soil_end_of_reporting_period_mg_kg) / feedstock_mg_kg
+        (
+            post_application_concentration_mg_kg * control_correction_ratio
+            - soil_end_of_reporting_period_mg_kg
+            - control_correction_delta_mg_kg
+        )
+        / feedstock_mg_kg
     )
 
     return np.where(np.isinf(fraction_dissolved), np.nan, fraction_dissolved)

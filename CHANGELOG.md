@@ -2,6 +2,28 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.39.0](https://github.com/isometric/calculation-library/releases/tag/v0.39.0)
+
+### Added
+
+- `enhanced_weathering.utils.statistical_checks._significance`: `run_paired_significance_test` / `run_unpaired_significance_test` and `PairedSignificanceTest` / `UnpairedSignificanceTest` - shared primitives that run a paired or unpaired significance test, picking a parametric or rank-based implementation (paired t-test / Wilcoxon signed-rank, Welch's t-test / Mann-Whitney U) from a Shapiro-Wilk normality check. Now used by both the control-correction and weathering-signal tests
+
+### Changed
+
+- `enhanced_weathering.utils.statistical_checks.control_correction_significance`: `check_background_weathering_significance_paired` / `check_background_weathering_significance_unpaired` are now normality-selected (paired t-test / Wilcoxon signed-rank, Welch's t-test / Mann-Whitney U) rather than always using a t-test, and return `ControlPlotChangeSignificanceTest` / `UnpairedControlPlotChangeSignificanceTest`. The always-t-test variants and `ControlPlotAlkalinityChangeSignificanceTest` have been removed; the paired result reports `n_pairs` in place of `n_baseline_samples` / `n_reporting_period_samples`, and neither result carries the `paired` flag
+- `enhanced_weathering.utils.statistical_checks.control_correction_significance`: `check_background_weathering_significance_unpaired` is now two-sided, matching the paired variant. Background cation change is real in either direction, and the previous one-sided depletion hypothesis reported a significant control *enrichment* as "not significant" rather than as what it was. Whether an enrichment may increase CDR remains the `floor_at_zero` decision on `apply_control_correction_delta_*`
+- `enhanced_weathering.utils.tracer`: `compute_fraction_dissolved` gains `control_correction_delta_mg_kg` (default 0.0), implementing `f_d = ((1+m)/m) * (C_post * cc - C_rp - delta) / C_feed`. `control_correction_ratio` is unchanged and still defaults to neutral, so existing results are bit-identical
+- `enhanced_weathering.utils.conversions`: `Cation` now includes `"Na"` and `"K"` alongside `"Ca"` and `"Mg"`, and `_cation_to_charge` returns 1 for them since sodium and potassium are monovalent — they capture half the CO2 per mole of a divalent cation. Existing calcium and magnesium arithmetic is unchanged, so callers passing only those are unaffected
+- `calculations.enhanced_weathering_cdr_tracer_ti_treatment_only`: quantifies sodium and potassium in addition to calcium and magnesium. Requires `mass_fraction_na` and `mass_fraction_k` in the soil and feedstock inputs, and changes credited CDR for this calculation
+
+### Deprecated
+
+- Ratio-based control correction is sunset in favour of the additive delta. `compute_control_correction_ratio`, `bootstrap_control_correction_ratios` and `compute_fraction_dissolved`'s `control_correction_ratio` argument still work but are deprecated
+
+### Fixed
+
+- `enhanced_weathering.utils.control_correction`: `apply_control_correction_delta_paired` computed its delta as `reporting_period - baseline`, the opposite sign to the unpaired variant and to the documented application. With the default `floor_at_zero=True` this clamped the correction to zero in exactly the case it exists for - a depleted control - while applying a spurious CDR reduction when the control was *enriched*. The delta is now `baseline - reporting_period` in both variants, so a positive delta always means background loss and always reduces CDR
+
 ## [0.38.2](https://github.com/isometric/calculation-library/releases/tag/v0.38.2)
 
 Dependency version update.

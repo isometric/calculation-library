@@ -9,89 +9,9 @@ import pytest
 from isometric_calculation_library.enhanced_weathering.utils.control_correction import (
     apply_control_correction_delta_paired,
     apply_control_correction_delta_unpaired,
-    bootstrap_control_correction_ratios,
     check_background_weathering_significance_paired,
     check_background_weathering_significance_unpaired,
-    compute_control_correction_ratio,
 )
-from isometric_calculation_library.enhanced_weathering.utils.resampling import (
-    generate_bootstrap_location_indices,
-)
-
-
-def test_control_correction_ratio() -> None:
-    """cc = C_reporting_period_ctrl / C_baseline_ctrl."""
-    result = compute_control_correction_ratio(
-        control_baseline_mg_kg=np.array([100.0, 200.0]),
-        control_end_of_reporting_period_mg_kg=np.array([90.0, 210.0]),
-    )
-    np.testing.assert_allclose(result, [0.9, 1.05])
-
-
-def test_bootstrap_ratios_stable_control() -> None:
-    """When control concentrations are stable, p50 ratios should be close to 1.0."""
-    rng = np.random.default_rng(42)
-    n_locations = 20
-    ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "baseline_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
-        "reporting_period_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "reporting_period_mass_fraction_mg": rng.normal(150, 4, size=n_locations),
-    })
-    indices = generate_bootstrap_location_indices(rng, n_locations, 10_000)
-
-    ratios = bootstrap_control_correction_ratios(
-        ctrl_paired=ctrl_paired,
-        resampled_control_locations=indices,
-        elements=["Ca", "Mg"],
-    )
-
-    assert set(ratios.keys()) == {"Ca", "Mg"}
-    ca_p50 = float(np.percentile(ratios["Ca"], 50))
-    mg_p50 = float(np.percentile(ratios["Mg"], 50))
-    assert ca_p50 == pytest.approx(1.0, abs=0.05)
-    assert mg_p50 == pytest.approx(1.0, abs=0.05)
-
-
-def test_bootstrap_ratios_shifted_control() -> None:
-    """When control RP is higher than baseline, p50 ratio should be > 1."""
-    rng = np.random.default_rng(42)
-    n_locations = 30
-    ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": np.full(n_locations, 200.0),
-        "reporting_period_mass_fraction_ca": np.full(n_locations, 220.0),
-    })
-    indices = generate_bootstrap_location_indices(rng, n_locations, 10_000)
-
-    ratios = bootstrap_control_correction_ratios(
-        ctrl_paired=ctrl_paired,
-        resampled_control_locations=indices,
-        elements=["Ca"],
-    )
-
-    ca_p50 = float(np.percentile(ratios["Ca"], 50))
-    assert ca_p50 == pytest.approx(1.1, abs=0.01)
-
-
-def test_bootstrap_ratios_returns_distributions() -> None:
-    """Each element's value should be a full bootstrap distribution, not a scalar."""
-    rng = np.random.default_rng(42)
-    n_locations = 20
-    n_runs = 5_000
-    ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-        "reporting_period_mass_fraction_ca": rng.normal(200, 5, size=n_locations),
-    })
-    indices = generate_bootstrap_location_indices(rng, n_locations, n_runs)
-
-    ratios = bootstrap_control_correction_ratios(
-        ctrl_paired=ctrl_paired,
-        resampled_control_locations=indices,
-        elements=["Ca"],
-    )
-
-    assert len(ratios["Ca"]) == n_runs
-
 
 # -- test_background_weathering_significance_paired ---------------------------
 
@@ -115,9 +35,7 @@ def test_background_weathering_not_significant_for_stable_controls() -> None:
 
     assert len(results) == 2
     for r in results:
-        assert r.n_baseline_samples == n
-        assert r.n_reporting_period_samples == n
-        assert r.paired is True
+        assert r.n_pairs == n
         assert r.is_significant is False
 
 
@@ -177,8 +95,7 @@ def test_background_weathering_nan_handling() -> None:
     )
 
     # Only 3 valid pairs (indices 0, 3, 4)
-    assert results[0].n_baseline_samples == 3
-    assert results[0].n_reporting_period_samples == 3
+    assert results[0].n_pairs == 3
 
 
 # -- test_background_weathering_significance_unpaired -------------------------
@@ -200,7 +117,6 @@ def test_unpaired_not_significant_for_similar_populations() -> None:
     assert results[0].is_significant is False
     assert results[0].n_reporting_period_samples == n
     assert results[0].n_baseline_samples == n
-    assert results[0].paired is False
 
 
 def test_unpaired_significant_for_shifted_populations() -> None:
@@ -222,8 +138,12 @@ def test_unpaired_significant_for_shifted_populations() -> None:
     assert r.mean_baseline == pytest.approx(200.0)
 
 
-def test_unpaired_not_significant_for_upward_shift() -> None:
-    """Control EOY higher than baseline → not significant (one-sided, depletion only)."""
+def test_unpaired_significant_for_upward_shift() -> None:
+    """Control EOY higher than baseline → significant (two-sided detects enrichment).
+
+    Whether an enrichment is allowed to increase CDR is decided by ``floor_at_zero``
+    downstream, not by the significance test declining to see it.
+    """
     n = 60
     control_rp = pd.DataFrame({"mass_fraction_ca": np.full(n, 220.0)})
     control_bl = pd.DataFrame({"mass_fraction_ca": np.full(n, 200.0)})
@@ -235,7 +155,9 @@ def test_unpaired_not_significant_for_upward_shift() -> None:
     )
 
     r = results[0]
-    assert r.is_significant is False
+    assert r.is_significant is True
+    assert r.p_value < 0.05
+    assert r.mean_reporting_period > r.mean_baseline
 
 
 def test_unpaired_too_few_control_samples_raises() -> None:
@@ -243,7 +165,7 @@ def test_unpaired_too_few_control_samples_raises() -> None:
     control_rp = pd.DataFrame({"mass_fraction_ca": [100.0, 200.0]})
     control_bl = pd.DataFrame({"mass_fraction_ca": np.full(20, 200.0)})
 
-    with pytest.raises(ValueError, match="2 valid control reporting period"):
+    with pytest.raises(ValueError, match=r"at least 3 valid control .*\(got 2 and 20\)"):
         check_background_weathering_significance_unpaired(
             control_reporting_period_samples=control_rp,
             control_baseline_samples=control_bl,
@@ -256,7 +178,7 @@ def test_unpaired_too_few_baseline_samples_raises() -> None:
     control_rp = pd.DataFrame({"mass_fraction_ca": np.full(20, 180.0)})
     control_bl = pd.DataFrame({"mass_fraction_ca": [200.0, 210.0]})
 
-    with pytest.raises(ValueError, match="2 valid control baseline"):
+    with pytest.raises(ValueError, match=r"at least 3 valid control .*\(got 20 and 2\)"):
         check_background_weathering_significance_unpaired(
             control_reporting_period_samples=control_rp,
             control_baseline_samples=control_bl,
@@ -322,12 +244,12 @@ def test_apply_control_correction_paired_not_significant_returns_zeros() -> None
 
 
 def test_apply_control_correction_paired_significant_returns_distribution() -> None:
-    """Significant → delta distribution centred near reporting_period_mean - baseline_mean."""
+    """Significant depletion → delta distribution centred near baseline_mean - rp_mean."""
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": rng.normal(200, 5, n),
-        "reporting_period_mass_fraction_ca": rng.normal(220, 5, n),
+        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -341,20 +263,19 @@ def test_apply_control_correction_paired_significant_returns_distribution() -> N
     assert r.is_significant is True
     assert len(r.cc_delta_distribution) == 5_000
     assert float(np.std(r.cc_delta_distribution)) > 0.0
+    # Positive: the control lost 20 ppm, so the correction reduces CDR.
+    assert r.cc_delta_point == pytest.approx(20.0, abs=2.0)
     assert float(np.median(r.cc_delta_distribution)) == pytest.approx(20.0, abs=2.0)
 
 
 def test_apply_control_correction_paired_floor_at_zero() -> None:
-    """floor_at_zero=True (default) prevents negative deltas in bootstrap."""
+    """floor_at_zero=True (default) stops control enrichment from inflating CDR."""
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
-        "reporting_period_mass_fraction_ca": rng.normal(
-            200,
-            5,
-            n,
-        ),  # reporting_period < baseline → raw delta would be negative
+        # Control gained cations, so the raw delta would be negative.
+        "baseline_mass_fraction_ca": rng.normal(200, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(220, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -366,17 +287,17 @@ def test_apply_control_correction_paired_floor_at_zero() -> None:
     )
 
     r = results[0]
-    if r.is_significant:
-        assert float(r.cc_delta_distribution.min()) >= 0.0
+    assert r.is_significant is True
+    assert float(r.cc_delta_distribution.min()) >= 0.0
 
 
 def test_apply_control_correction_paired_no_floor() -> None:
-    """floor_at_zero=False allows negative deltas in bootstrap."""
+    """floor_at_zero=False lets control enrichment produce a negative delta."""
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
-        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
-        "reporting_period_mass_fraction_ca": rng.normal(200, 5, n),
+        "baseline_mass_fraction_ca": rng.normal(200, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(220, 5, n),
     })
 
     results = apply_control_correction_delta_paired(
@@ -389,8 +310,30 @@ def test_apply_control_correction_paired_no_floor() -> None:
 
     r = results[0]
     assert r.is_significant is True
-    # With no floor and reporting_period < baseline, delta = reporting_period - baseline is negative
+    # Enrichment: delta = baseline - reporting_period is negative throughout.
     assert float(r.cc_delta_distribution.max()) < 0.0
+
+
+def test_apply_control_correction_paired_depletion_is_not_floored_away() -> None:
+    """Depletion must survive the floor — it is the case the correction exists for."""
+    rng = np.random.default_rng(42)
+    n = 50
+    ctrl_paired = pd.DataFrame({
+        "baseline_mass_fraction_ca": rng.normal(220, 5, n),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, n),
+    })
+
+    results = apply_control_correction_delta_paired(
+        ctrl_paired=ctrl_paired,
+        elements=["Ca"],
+        rng=rng,
+        n_runs=5_000,
+        floor_at_zero=True,
+    )
+
+    r = results[0]
+    assert r.is_significant is True
+    assert float(np.median(r.cc_delta_distribution)) == pytest.approx(20.0, abs=2.0)
 
 
 # -- apply_control_correction_delta_unpaired -----------------------------------
@@ -442,11 +385,15 @@ def test_apply_control_correction_unpaired_significant_returns_distribution() ->
 
 
 def test_apply_control_correction_unpaired_floor_at_zero() -> None:
-    """floor_at_zero=True (default) prevents negative deltas in bootstrap."""
+    """floor_at_zero=True stops a significant control enrichment from inflating CDR.
+
+    The two-sided test now flags enrichment as significant, so the floor is what keeps
+    it from becoming a negative delta.
+    """
     rng = np.random.default_rng(42)
     n = 60
-    control_rp = pd.DataFrame({"mass_fraction_ca": rng.normal(195, 20, n)})
-    control_bl = pd.DataFrame({"mass_fraction_ca": rng.normal(200, 20, n)})
+    control_rp = pd.DataFrame({"mass_fraction_ca": rng.normal(220, 5, n)})
+    control_bl = pd.DataFrame({"mass_fraction_ca": rng.normal(200, 5, n)})
 
     results = apply_control_correction_delta_unpaired(
         control_reporting_period_samples=control_rp,
@@ -458,8 +405,8 @@ def test_apply_control_correction_unpaired_floor_at_zero() -> None:
     )
 
     r = results[0]
-    if r.is_significant:
-        assert float(r.cc_delta_distribution.min()) >= 0.0
+    assert r.is_significant is True
+    assert float(r.cc_delta_distribution.min()) >= 0.0
 
 
 def test_apply_control_correction_unpaired_no_floor() -> None:
@@ -482,3 +429,81 @@ def test_apply_control_correction_unpaired_no_floor() -> None:
     assert r.is_significant is True
     # With no floor, distribution may contain negative values
     assert float(r.cc_delta_distribution.min()) < float(r.cc_delta_distribution.max())
+
+
+def test_paired_significance_uses_t_test_for_normal_differences() -> None:
+    """Normal paired differences → paired t-test selected."""
+    rng = np.random.default_rng(0)
+    n = 40
+    baseline = rng.normal(200, 5, size=n)
+    ctrl_paired = pd.DataFrame({
+        "baseline_mass_fraction_ca": baseline,
+        # Constant multiplicative shift keeps the differences approximately normal.
+        "reporting_period_mass_fraction_ca": baseline * 0.9 + rng.normal(0, 1, size=n),
+    })
+
+    results = check_background_weathering_significance_paired(
+        ctrl_paired=ctrl_paired,
+        elements=["Ca"],
+    )
+
+    result = results[0]
+    assert result.test_name == "paired_t_test"
+    assert result.differences_are_normal is True
+    assert result.is_significant is True
+
+
+def test_paired_significance_uses_wilcoxon_for_non_normal_differences() -> None:
+    """Heavy-tailed paired differences → Wilcoxon signed-rank selected."""
+    rng = np.random.default_rng(1)
+    n = 40
+    baseline = rng.normal(200, 5, size=n)
+    # Cauchy noise makes the differences strongly non-normal.
+    ctrl_paired = pd.DataFrame({
+        "baseline_mass_fraction_ca": baseline,
+        "reporting_period_mass_fraction_ca": baseline * 0.9 + rng.standard_cauchy(size=n) * 20,
+    })
+
+    results = check_background_weathering_significance_paired(
+        ctrl_paired=ctrl_paired,
+        elements=["Ca"],
+    )
+
+    result = results[0]
+    assert result.test_name == "wilcoxon_signed_rank"
+    assert result.differences_are_normal is False
+
+
+def test_unpaired_significance_uses_welch_for_normal_samples() -> None:
+    """Both control samples normal → Welch's t-test selected."""
+    rng = np.random.default_rng(0)
+    control_rp = pd.DataFrame({"mass_fraction_ca": rng.normal(180, 6, size=40)})
+    control_bl = pd.DataFrame({"mass_fraction_ca": rng.normal(200, 6, size=40)})
+
+    results = check_background_weathering_significance_unpaired(
+        control_reporting_period_samples=control_rp,
+        control_baseline_samples=control_bl,
+        elements=["Ca"],
+    )
+
+    result = results[0]
+    assert result.test_name == "welch_t_test"
+    assert result.both_distributions_normal is True
+    assert result.is_significant is True  # RP is depleted vs BL
+
+
+def test_unpaired_significance_uses_mann_whitney_for_non_normal() -> None:
+    """Heavy-tailed control samples → Mann-Whitney U selected."""
+    rng = np.random.default_rng(1)
+    control_rp = pd.DataFrame({"mass_fraction_ca": 180 + rng.standard_cauchy(size=40) * 15})
+    control_bl = pd.DataFrame({"mass_fraction_ca": 200 + rng.standard_cauchy(size=40) * 15})
+
+    results = check_background_weathering_significance_unpaired(
+        control_reporting_period_samples=control_rp,
+        control_baseline_samples=control_bl,
+        elements=["Ca"],
+    )
+
+    result = results[0]
+    assert result.test_name == "mann_whitney_u"
+    assert result.both_distributions_normal is False

@@ -2,42 +2,49 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
-"""Significance tests for alkalinity change in control plots."""
+"""Significance tests for cation change in control plots."""
 
 from collections.abc import Sequence
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pandas as pd
-from scipy.stats import ttest_ind, ttest_rel
 
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks._significance import (
+    run_paired_significance_test,
+    run_unpaired_significance_test,
+)
 from isometric_calculation_library.enhanced_weathering.utils.types import mass_fraction_column_name
 from isometric_calculation_library.utils.elements import ElementSymbol
 
 
-class ControlPlotAlkalinityChangeSignificanceTest(NamedTuple):
-    """Result of a significance test for alkalinity change in control plots."""
+class ControlPlotChangeSignificanceTest(NamedTuple):
+    """Result of a paired significance test for control-plot cation change.
+
+    Chooses a paired t-test when the paired differences pass a Shapiro-Wilk
+    normality check, otherwise a Wilcoxon signed-rank test.
+    """
 
     element: ElementSymbol
     """Element tested (e.g. Ca, Mg)."""
 
-    t_statistic: float
+    test_name: Literal["paired_t_test", "wilcoxon_signed_rank"]
+    """Which test was run, decided by the normality check on the paired differences."""
+
+    differences_are_normal: bool
+    """Whether the paired differences passed the Shapiro-Wilk normality check."""
+
+    statistic: float
     """Test statistic."""
 
     p_value: float
-    """Two-sided p-value for paired designs; one-sided (H1: depletion) for unpaired."""
+    """Two-sided p-value: control change in either direction can be significant."""
 
     is_significant: bool
-    """Whether the alkalinity change is statistically significant at the given alpha."""
+    """Whether the control-plot change is statistically significant at the given alpha."""
 
-    n_baseline_samples: int
-    """Number of baseline samples used (equals n_reporting_period_samples for paired design)."""
-
-    n_reporting_period_samples: int
-    """Number of reporting period samples used (equals n_baseline_samples for paired design)."""
-
-    paired: bool
-    """Whether the test used a paired design."""
+    n_pairs: int
+    """Number of valid paired locations used in the test."""
 
     mean_baseline: float
     """Mean baseline concentration (mg/kg)."""
@@ -51,19 +58,22 @@ def check_background_weathering_significance_paired(
     ctrl_paired: pd.DataFrame,
     elements: Sequence[ElementSymbol],
     alpha: float = 0.05,
-) -> list[ControlPlotAlkalinityChangeSignificanceTest]:
-    """Test whether background weathering in control plots is statistically significant.
+) -> list[ControlPlotChangeSignificanceTest]:
+    """Test whether paired control-plot cation change is significant.
 
-    Runs a paired t-test per element on control plot cation concentrations across
-    baseline and reporting period.
+    For each element, tests whether the paired baseline-vs-reporting-period change
+    at control locations is significant. A Shapiro-Wilk check on the paired
+    differences selects the test: a paired t-test when the differences are normal,
+    otherwise a Wilcoxon signed-rank test. The test is two-sided because a control
+    correction ratio can legitimately move in either direction.
 
     Args:
-        ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and ``reporting_period_{col}``
-            columns (as produced by ``pair_locations``).
+        ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and
+            ``reporting_period_{col}`` columns (as produced by ``pair_locations``).
         elements: Element names to test (e.g. ``["Ca", "Mg"]``).
         alpha: Significance level for the two-sided test.
     """
-    results = list[ControlPlotAlkalinityChangeSignificanceTest]()
+    results = list[ControlPlotChangeSignificanceTest]()
     for element in elements:
         col = mass_fraction_column_name(element)
         baseline_col = f"baseline_{col}"
@@ -79,7 +89,6 @@ def check_background_weathering_significance_paired(
 
         baseline_values = ctrl_paired[baseline_col].to_numpy(dtype=float)
         reporting_period_values = ctrl_paired[reporting_period_col].to_numpy(dtype=float)
-
         valid = np.isfinite(baseline_values) & np.isfinite(reporting_period_values)
         baseline_valid = baseline_values[valid]
         reporting_period_valid = reporting_period_values[valid]
@@ -88,30 +97,69 @@ def check_background_weathering_significance_paired(
         if n_pairs < 3:
             raise ValueError(
                 f"Only {n_pairs} valid paired location(s) found for element {element!r} — "
-                "at least 3 are required to run the background weathering significance test.",
+                "at least 3 are required to run the control-correction significance test.",
             )
 
-        mean_baseline = float(np.mean(baseline_valid))
-        mean_reporting_period = float(np.mean(reporting_period_valid))
-
-        t_stat, p_val = ttest_rel(baseline_valid, reporting_period_valid)
-        is_significant = float(p_val) < alpha
-
+        # Two-sided: a control-correction ratio can legitimately move in either direction.
+        test = run_paired_significance_test(
+            reporting_period_valid,
+            baseline_valid,
+            alternative="two-sided",
+            significance_level=alpha,
+        )
         results.append(
-            ControlPlotAlkalinityChangeSignificanceTest(
+            ControlPlotChangeSignificanceTest(
                 element=element,
-                t_statistic=float(t_stat),
-                p_value=float(p_val),
-                is_significant=is_significant,
-                n_baseline_samples=n_pairs,
-                n_reporting_period_samples=n_pairs,
-                paired=True,
-                mean_baseline=mean_baseline,
-                mean_reporting_period=mean_reporting_period,
+                test_name=test.test_name,
+                differences_are_normal=test.differences_are_normal,
+                statistic=test.statistic,
+                p_value=test.p_value,
+                is_significant=test.p_value < alpha,
+                n_pairs=n_pairs,
+                mean_baseline=float(np.mean(baseline_valid)),
+                mean_reporting_period=float(np.mean(reporting_period_valid)),
             ),
         )
 
     return results
+
+
+class UnpairedControlPlotChangeSignificanceTest(NamedTuple):
+    """Result of an unpaired significance test for control-plot cation change.
+
+    Chooses Welch's t-test when both sample distributions pass a Shapiro-Wilk normality
+    check, otherwise a Mann-Whitney U test. Two-sided: the control can move either way.
+    """
+
+    element: ElementSymbol
+    """Element tested (e.g. Ca, Mg)."""
+
+    test_name: Literal["welch_t_test", "mann_whitney_u"]
+    """Which test was run, decided by the normality check on the two samples."""
+
+    both_distributions_normal: bool
+    """Whether both samples passed the Shapiro-Wilk normality check."""
+
+    statistic: float
+    """Test statistic."""
+
+    p_value: float
+    """Two-sided p-value: control change in either direction can be significant."""
+
+    is_significant: bool
+    """Whether the control-plot change is statistically significant at the given alpha."""
+
+    n_baseline_samples: int
+    """Number of valid control baseline samples used."""
+
+    n_reporting_period_samples: int
+    """Number of valid control reporting-period samples used."""
+
+    mean_baseline: float
+    """Mean baseline concentration (mg/kg)."""
+
+    mean_reporting_period: float
+    """Mean reporting period concentration (mg/kg)."""
 
 
 def check_background_weathering_significance_unpaired(
@@ -120,33 +168,28 @@ def check_background_weathering_significance_unpaired(
     control_baseline_samples: pd.DataFrame,
     elements: Sequence[ElementSymbol],
     alpha: float = 0.05,
-) -> list[ControlPlotAlkalinityChangeSignificanceTest]:
-    """Test whether background weathering is significant using unpaired control samples.
+) -> list[UnpairedControlPlotChangeSignificanceTest]:
+    """Test whether unpaired control-plot cation change is significant.
 
-    Applies a one-sided Welch's two-sample t-test (unequal variances) per element,
-    testing whether control reporting period concentrations are *lower* than the control
-    baseline (``alternative='less'``). Only depletion is actionable: if controls lose
-    cations over time, the CDR estimate must be adjusted downward. Enrichment is not
-    credited because the unpaired design cannot separate temporal enrichment from spatial
-    heterogeneity between control and treatment areas.
+    For each element, tests whether the control reporting-period concentrations differ
+    from the control baseline. A Shapiro-Wilk check on each sample selects the test:
+    Welch's two-sample t-test when both are normal, otherwise Mann-Whitney U. The test
+    is two-sided because background cation change is real in either direction.
 
-    This is the appropriate test when control plots have only a single sampling timepoint
-    (reporting period only) and no paired pre-deployment baseline is available. The control
-    baseline is typically drawn from treatment plot baseline samples, which represent the
-    landscape-wide soil chemistry before any intervention.
+    Whether an enrichment should then be allowed to increase CDR is a separate decision,
+    made by the ``floor_at_zero`` argument on the ``apply_control_correction_delta_*``
+    functions.
 
     Args:
-        control_reporting_period_samples: DataFrame of control reporting period samples
-            with a ``mass_fraction_{element}`` column for each element.
-        control_baseline_samples: DataFrame of control baseline samples with the same
-            columns (e.g. treatment plot baseline samples).
+        control_reporting_period_samples: Control reporting-period samples with a
+            ``mass_fraction_{element}`` column for each element.
+        control_baseline_samples: Control baseline samples with the same columns.
         elements: Element names to test (e.g. ``["Ca", "Mg"]``).
-        alpha: Significance level for the one-sided test (protocol requires 0.05).
+        alpha: Significance level for the two-sided test.
     """
-    results = list[ControlPlotAlkalinityChangeSignificanceTest]()
+    results = list[UnpairedControlPlotChangeSignificanceTest]()
     for element in elements:
         col = mass_fraction_column_name(element)
-
         for df, label in (
             (control_reporting_period_samples, "control_reporting_period"),
             (control_baseline_samples, "control_baseline"),
@@ -157,46 +200,37 @@ def check_background_weathering_significance_unpaired(
                     f"(available: {list(df.columns)!r}).",
                 )
 
-        control_values = control_reporting_period_samples[col].to_numpy(dtype=float)
-        baseline_values = control_baseline_samples[col].to_numpy(dtype=float)
+        reporting_period_valid = control_reporting_period_samples[col].to_numpy(dtype=float)
+        reporting_period_valid = reporting_period_valid[np.isfinite(reporting_period_valid)]
+        baseline_valid = control_baseline_samples[col].to_numpy(dtype=float)
+        baseline_valid = baseline_valid[np.isfinite(baseline_valid)]
 
-        control_valid = control_values[np.isfinite(control_values)]
-        baseline_valid = baseline_values[np.isfinite(baseline_values)]
-
-        if len(control_valid) < 3:
+        if len(reporting_period_valid) < 3 or len(baseline_valid) < 3:
             raise ValueError(
-                f"Only {len(control_valid)} valid control reporting period sample(s) for element {element!r} — "
-                "at least 3 are required.",
-            )
-        if len(baseline_valid) < 3:
-            raise ValueError(
-                f"Only {len(baseline_valid)} valid control baseline sample(s) for element {element!r} — "
-                "at least 3 are required.",
+                f"Element {element!r} needs at least 3 valid control reporting-period and "
+                f"baseline samples (got {len(reporting_period_valid)} and "
+                f"{len(baseline_valid)}) to run the control-correction significance test.",
             )
 
-        mean_reporting_period = float(np.mean(control_valid))
-        mean_baseline = float(np.mean(baseline_valid))
-
-        # One-sided: alternative='less' tests H1: mean(control_rp) < mean(control_baseline)
-        t_stat, p_val = ttest_ind(
-            control_valid,
+        # Two-sided: background change is real whichever way the control moved.
+        test = run_unpaired_significance_test(
+            reporting_period_valid,
             baseline_valid,
-            equal_var=False,
-            alternative="less",
+            alternative="two-sided",
+            significance_level=alpha,
         )
-        is_significant = float(p_val) < alpha
-
         results.append(
-            ControlPlotAlkalinityChangeSignificanceTest(
+            UnpairedControlPlotChangeSignificanceTest(
                 element=element,
-                t_statistic=float(t_stat),
-                p_value=float(p_val),
-                is_significant=is_significant,
+                test_name=test.test_name,
+                both_distributions_normal=test.both_distributions_normal,
+                statistic=test.statistic,
+                p_value=test.p_value,
+                is_significant=test.p_value < alpha,
                 n_baseline_samples=len(baseline_valid),
-                n_reporting_period_samples=len(control_valid),
-                paired=False,
-                mean_baseline=mean_baseline,
-                mean_reporting_period=mean_reporting_period,
+                n_reporting_period_samples=len(reporting_period_valid),
+                mean_baseline=float(np.mean(baseline_valid)),
+                mean_reporting_period=float(np.mean(reporting_period_valid)),
             ),
         )
 

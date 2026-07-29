@@ -4,8 +4,12 @@
 
 """Control correction for enhanced weathering quantification.
 
-Supports both paired and unpaired designs. Both return an additive delta (mg/kg)
-that is added to EOY soil concentrations before computing fraction dissolved.
+Prefer the additive delta (``apply_control_correction_delta_*``), which returns a signed
+mg/kg offset — positive means the control lost cations — subtracted when computing fraction
+dissolved.
+
+``compute_control_correction_ratio`` and ``bootstrap_control_correction_ratios`` are the
+older multiplicative form and are deprecated.
 """
 
 from collections.abc import Mapping, Sequence
@@ -19,7 +23,8 @@ from isometric_calculation_library.enhanced_weathering.utils.resampling import (
     generate_bootstrap_location_indices,
 )
 from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.control_correction_significance import (
-    ControlPlotAlkalinityChangeSignificanceTest,
+    ControlPlotChangeSignificanceTest,
+    UnpairedControlPlotChangeSignificanceTest,
     check_background_weathering_significance_paired,
     check_background_weathering_significance_unpaired,
 )
@@ -31,7 +36,8 @@ from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
 __all__ = [
     "ControlCorrectionDeltaResult",
-    "ControlPlotAlkalinityChangeSignificanceTest",
+    "ControlPlotChangeSignificanceTest",
+    "UnpairedControlPlotChangeSignificanceTest",
     "apply_control_correction_delta_paired",
     "apply_control_correction_delta_unpaired",
     "bootstrap_control_correction_ratios",
@@ -51,6 +57,8 @@ def compute_control_correction_ratio(
     cc = C_reporting_period_ctrl / C_baseline_ctrl
 
     No clamping is applied so that full uncertainty propagates through the bootstrap.
+
+    Prefer ``apply_control_correction_delta_paired`` for new quantification.
     """
     return control_end_of_reporting_period_mg_kg / control_baseline_mg_kg
 
@@ -63,9 +71,11 @@ def bootstrap_control_correction_ratios(
 ) -> Mapping[ElementSymbol, Np1DArray[np.floating]]:
     """Bootstrap control correction ratio distributions for each element.
 
-    Bootstraps cation concentrations at control locations across both periods
-    and returns the full ratio distribution for each element.  The caller
-    decides how to summarise it (e.g. ``np.percentile(ratios["Ca"], 50)``).
+    Bootstraps cation concentrations at control locations across both periods and returns
+    the full ratio distribution for each element. The caller decides how to summarise it
+    (e.g. ``np.percentile(ratios["Ca"], 50)``).
+
+    Prefer ``apply_control_correction_delta_paired`` for new quantification.
 
     Args:
         ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and
@@ -103,14 +113,19 @@ class ControlCorrectionDeltaResult(NamedTuple):
     """Whether the background weathering significance test passed."""
 
     cc_delta_point: float
-    """Point estimate of additive cc delta (mg/kg). 0.0 if not significant."""
+    """Point estimate of additive cc delta (mg/kg). 0.0 if not significant.
+
+    Signed so that a positive delta means the control *lost* cations
+    (delta = mean(C_baseline_ctrl) - mean(C_reporting_period_ctrl)).
+    """
 
     cc_delta_distribution: Np1DArray[np.floating]
     """Full bootstrap distribution of additive cc deltas (mg/kg). All 0.0 if not significant.
 
-    To apply: subtract this from the EOY-minus-RP difference before computing fraction dissolved.
-    This shifts the CDR formula from f_d = ((1+m)/m)*(C_post - C_rp)/C_feed
-    to f_d = ((1+m)/m)*(C_post - C_rp - delta)/C_feed.
+    Pass this to ``compute_fraction_dissolved`` as ``control_correction_delta_mg_kg``:
+    ``f_d = ((1+m)/m) * (C_post - C_rp - delta) / C_feed``. A positive delta therefore
+    reduces the fraction dissolved, which is the intended effect when the control shows
+    background cation loss.
     """
 
     test_statistic: float
@@ -137,10 +152,13 @@ def apply_control_correction_delta_paired(
 ) -> list[ControlCorrectionDeltaResult]:
     """Gate on significance then compute the full bootstrap cc distribution (paired design).
 
-    If the paired t-test is significant for an element, bootstraps the full
+    If the paired significance test passes for an element, bootstraps the full
     additive cc delta distribution from the paired control data. Otherwise returns a
     constant distribution of 0.0 so that uncertainty propagation is uniform
     across all cases.
+
+    delta = mean(baseline_resamp) - mean(reporting_period_resamp), so a positive delta
+    means the control lost cations and the correction reduces CDR.
 
     Args:
         ctrl_paired: Paired control DataFrame with ``baseline_{col}`` and ``reporting_period_{col}``
@@ -179,8 +197,8 @@ def apply_control_correction_delta_paired(
                 ctrl_paired_finite[f"reporting_period_{col}"].to_numpy(),
                 resampled_indices,
             )
-            # Additive delta: background change = reporting_period - baseline (may be positive or negative)
-            cc_dist = reporting_period_boot - baseline_boot
+            # Positive delta means the control lost cations, which reduces CDR.
+            cc_dist = baseline_boot - reporting_period_boot
             if floor_at_zero:
                 cc_dist = np.maximum(cc_dist, 0.0)
         else:
@@ -190,14 +208,14 @@ def apply_control_correction_delta_paired(
             ControlCorrectionDeltaResult(
                 element=result.element,
                 is_significant=result.is_significant,
-                cc_delta_point=result.mean_reporting_period - result.mean_baseline
+                cc_delta_point=result.mean_baseline - result.mean_reporting_period
                 if result.is_significant
                 else 0.0,
                 cc_delta_distribution=cc_dist,
-                test_statistic=result.t_statistic,
+                test_statistic=result.statistic,
                 p_value=result.p_value,
-                n_control_baseline_samples=result.n_baseline_samples,
-                n_control_reporting_period_samples=result.n_reporting_period_samples,
+                n_control_baseline_samples=result.n_pairs,
+                n_control_reporting_period_samples=result.n_pairs,
             ),
         )
 
@@ -216,13 +234,13 @@ def apply_control_correction_delta_unpaired(
 ) -> list[ControlCorrectionDeltaResult]:
     """Gate on significance then bootstrap the additive control delta distribution (unpaired design).
 
-    If the one-sided Welch's t-test is significant (control reporting period < control baseline),
-    bootstraps the full delta distribution by independently resampling control reporting period and
-    control baseline populations. delta = mean(baseline_resamp) - mean(reporting_period_resamp), optionally
-    floored at 0.0 to prevent any single bootstrap run from inflating CDR.
+    If the two-sided significance test passes, bootstraps the full delta distribution by
+    independently resampling the control reporting-period and control baseline populations.
+    delta = mean(baseline_resamp) - mean(reporting_period_resamp), so a positive delta means
+    the control lost cations.
 
-    To apply the correction: add ``cc_delta_distribution`` to the reporting period soil concentration
-    array before calling ``compute_fraction_dissolved``. This implements:
+    Pass ``cc_delta_distribution`` to ``compute_fraction_dissolved`` as
+    ``control_correction_delta_mg_kg``, which implements:
     ``f_d = ((1+m)/m) * (C_post - C_rp - delta) / C_feed``
 
     Args:
@@ -274,7 +292,7 @@ def apply_control_correction_delta_unpaired(
                 if result.is_significant
                 else 0.0,
                 cc_delta_distribution=cc_dist,
-                test_statistic=result.t_statistic,
+                test_statistic=result.statistic,
                 p_value=result.p_value,
                 n_control_baseline_samples=result.n_baseline_samples,
                 n_control_reporting_period_samples=result.n_reporting_period_samples,

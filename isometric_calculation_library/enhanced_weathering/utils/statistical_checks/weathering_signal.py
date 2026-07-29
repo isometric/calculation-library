@@ -17,7 +17,6 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 from isometric_calculation_library.enhanced_weathering.utils.types import (
     mass_fraction_column_name,
@@ -25,7 +24,7 @@ from isometric_calculation_library.enhanced_weathering.utils.types import (
 from isometric_calculation_library.utils.elements import ElementSymbol
 from isometric_calculation_library.utils.types import Np1DArray
 
-from ._normality import check_normality
+from ._significance import run_paired_significance_test, run_unpaired_significance_test
 
 
 @dataclass(frozen=True)
@@ -106,33 +105,19 @@ def check_weathering_significance(
             "yields a meaningless or NaN p-value that would silently read as non-significant.",
         )
 
-    both_distributions_normal = check_normality(
+    # One-sided: H1 is weathering, i.e. post-application concentration > end-of-period.
+    test = run_unpaired_significance_test(
         post_application_concentrations_mg_kg,
-    ) and check_normality(end_of_reporting_period_concentrations_mg_kg)
-
-    if both_distributions_normal:
-        result = stats.ttest_ind(
-            post_application_concentrations_mg_kg,
-            end_of_reporting_period_concentrations_mg_kg,
-            equal_var=False,
-            alternative="greater",
-        )
-        test_name = "welch_t_test"
-    else:
-        result = stats.mannwhitneyu(
-            post_application_concentrations_mg_kg,
-            end_of_reporting_period_concentrations_mg_kg,
-            alternative="greater",
-        )
-        test_name = "mann_whitney_u"
-
-    p_value = float(result.pvalue)
+        end_of_reporting_period_concentrations_mg_kg,
+        alternative="greater",
+        significance_level=significance_level,
+    )
 
     return SignificanceTestResult(
-        test_name=test_name,
-        statistic=float(result.statistic),
-        p_value=p_value,
-        significant=p_value < significance_level,
+        test_name=test.test_name,
+        statistic=test.statistic,
+        p_value=test.p_value,
+        significant=test.p_value < significance_level,
         significance_level=significance_level,
         n_post_application=len(post_application_concentrations_mg_kg),
         n_end_of_reporting_period=len(end_of_reporting_period_concentrations_mg_kg),
@@ -181,33 +166,20 @@ def check_weathering_significance_paired(
             f"got {len(post_application_concentrations_mg_kg)}.",
         )
 
-    differences = (
-        post_application_concentrations_mg_kg - end_of_reporting_period_concentrations_mg_kg
+    # One-sided: H1 is weathering, i.e. post-application concentration > end-of-period.
+    test = run_paired_significance_test(
+        post_application_concentrations_mg_kg,
+        end_of_reporting_period_concentrations_mg_kg,
+        alternative="greater",
+        significance_level=significance_level,
     )
-
-    if check_normality(differences):
-        result = stats.ttest_rel(
-            post_application_concentrations_mg_kg,
-            end_of_reporting_period_concentrations_mg_kg,
-            alternative="greater",
-        )
-        test_name: Literal["paired_t_test", "wilcoxon_signed_rank"] = "paired_t_test"
-    else:
-        result = stats.wilcoxon(
-            post_application_concentrations_mg_kg,
-            end_of_reporting_period_concentrations_mg_kg,
-            alternative="greater",
-        )
-        test_name = "wilcoxon_signed_rank"
-
-    p_value = float(result.pvalue)
     n = len(post_application_concentrations_mg_kg)
 
     return SignificanceTestResult(
-        test_name=test_name,
-        statistic=float(result.statistic),
-        p_value=p_value,
-        significant=p_value < significance_level,
+        test_name=test.test_name,
+        statistic=test.statistic,
+        p_value=test.p_value,
+        significant=test.p_value < significance_level,
         significance_level=significance_level,
         n_post_application=n,
         n_end_of_reporting_period=n,

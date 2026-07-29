@@ -175,11 +175,12 @@ def convert_cdr_to_co2(
 ) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating], Np1DArray[np.floating]]:
     """Convert cation CDR to CO2 equivalent and scale by area.
 
-    Uses stoichiometry: 2 moles CO2 per mole of divalent cation (Ca²⁺, Mg²⁺).
+    Uses stoichiometry: one mole of CO2 per unit of ionic charge, so 2 moles per mole of
+    a divalent cation (Ca²⁺, Mg²⁺) and 1 per mole of a monovalent one (Na⁺, K⁺).
 
     Args:
         cdr_cation_kg_ha: CDR in kg of cation per hectare.
-        cation: Cation element symbol ("Ca" or "Mg").
+        cation: Cation element symbol ("Ca", "Mg", "Na", or "K").
         area_hectares: Treatment area size in hectares.
 
     Returns:
