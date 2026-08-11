@@ -14,7 +14,7 @@ dev = [
   "scipy-stubs==1.18.0.1",
   "toml-sort==0.24.4",
   "tomlkit==0.15.1",
-  "typer==0.27.0",
+  "typer==0.27.1",
 ]
 
 [project]
@@ -23,7 +23,7 @@ dependencies = [
   "numpy==2.5.1",
   "pandas==3.0.3",
   "pyproj==3.7.2",
-  "rasterio==1.5.0",
+  "rasterio==1.5.1",
   "scikit-learn==1.9.0",
   "scipy==1.18.0",
   "shapely==2.1.2",
@@ -35,7 +35,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.39.1"
+version = "0.39.3"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
