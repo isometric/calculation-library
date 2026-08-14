@@ -2,6 +2,17 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.42.0](https://github.com/isometric/calculation-library/releases/tag/v0.42.0)
+
+### Added
+
+- `biosphere.monte_carlo.plot_geometry`: `PlotShape`, `plot_area_m2`, `PlotDeformer`, `build_plot_deformer` - decomposes field plot georeferencing error into a GPS centre offset and angularly-autocorrelated shape deformation, replacing independent per-vertex jitter
+
+### Changed
+
+- `biosphere.allometric_equations.wood_density`: `tree_type_to_species` now also accepts the colon-delimited qualifier spelling of a tree type (`taxonomic_rank:species:cecropia_obtusa`) alongside the enum spelling (`SPECIES_CECROPIA_OBTUSA`). Measurements read through the activity model carry the qualifier form, so a model consuming them previously raised `KeyError` on every identified species
+- `biosphere.monte_carlo.field_plot`: `FieldPlot` takes `area_m2` in place of `plot_size_m`, so per-hectare biomass comes from a plot's surveyed polygon rather than a nominal side length. Plots are rarely laid out to their nominal dimension, that dimension is sometimes absent altogether, and where it disagrees with the polygon it can be badly wrong - a plot labelled "40 m square" enclosing 3000 m² would have had its per-hectare biomass overstated by nearly a factor of two. `plot_area_m2` remains for deriving an area from a nominal dimension when no polygon is available
+
 ## [0.41.0](https://github.com/isometric/calculation-library/releases/tag/v0.41.0)
 
 ### Changed

@@ -3,6 +3,7 @@
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from isometric_calculation_library.biosphere.allometric_equations.chave import (
@@ -30,8 +31,8 @@ def _make_trees(n: int = 3) -> TreeMeasurements:
     )
 
 
-def _make_plot(n: int = 3, plot_size: float = 40.0) -> FieldPlot:
-    return FieldPlot(plot_id="P1", trees=_make_trees(n), plot_size_m=plot_size)
+def _make_plot(n: int = 3, area_m2: float = 1600.0) -> FieldPlot:
+    return FieldPlot(plot_id="P1", trees=_make_trees(n), area_m2=area_m2)
 
 
 # --- TreeMeasurements ---
@@ -71,19 +72,36 @@ def test_field_plot_compute_tco2e_ha_matches_manual_calculation() -> None:
         plot.trees.height_m,
         plot.trees.wood_density_g_cm3,
     )
-    plot_area_ha = (plot.plot_size_m**2) / M2_PER_HECTARE
+    plot_area_ha = plot.area_m2 / M2_PER_HECTARE
     expected = agb_tonnes / plot_area_ha * CARBON_FRACTION * CO2_TO_CARBON_RATIO
     assert_allclose(plot_result, expected)
 
 
-def test_field_plot_plot_size_affects_result() -> None:
-    plot_40 = _make_plot(plot_size=40.0)
-    plot_100 = _make_plot(plot_size=100.0)
+def test_field_plot_area_affects_result() -> None:
+    """Per-hectare biomass scales inversely with the plot's area."""
+    plot_small = _make_plot(area_m2=1600.0)
+    plot_large = _make_plot(area_m2=10000.0)
 
-    result_40 = plot_40.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
-    result_100 = plot_100.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
+    result_small = plot_small.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
+    result_large = plot_large.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
 
-    assert_allclose(result_40 / result_100, [(100 / 40) ** 2] * 3, rtol=1e-10)
+    assert_allclose(result_small / result_large, [10000 / 1600] * 3, rtol=1e-10)
+
+
+def test_field_plot_uses_surveyed_area_not_nominal_dimension() -> None:
+    """Per-hectare biomass comes from the surveyed area, not the nominal one."""
+    trees = _make_trees()
+    nominal = FieldPlot(plot_id="P1", trees=trees, area_m2=1600.0)
+    surveyed = FieldPlot(plot_id="P1", trees=trees, area_m2=3000.0)
+
+    nominal_result = nominal.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
+    surveyed_result = surveyed.compute_tco2e_ha(model=CHAVE_DEFAULT, carbon_ratio=CARBON_FRACTION)
+
+    assert_allclose(nominal_result / surveyed_result, [3000 / 1600] * 3, rtol=1e-10)
+
+
+def test_field_plot_area_ha_converts_from_m2() -> None:
+    assert _make_plot(area_m2=10000.0).plot_area_ha == pytest.approx(1.0)
 
 
 def test_field_plot_custom_model() -> None:

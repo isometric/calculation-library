@@ -58,3 +58,19 @@ def test_tree_type_to_species_bare_name() -> None:
 
 def test_tree_type_to_species_single_word() -> None:
     assert tree_type_to_species("SPECIES_CECROPIA") == "Cecropia"
+
+
+def test_tree_type_to_species_with_species_qualifier() -> None:
+    """Measurements read through the activity model carry the qualifier spelling."""
+    assert tree_type_to_species("taxonomic_rank:species:cecropia_obtusa") == "Cecropia obtusa"
+
+
+def test_tree_type_to_species_with_genus_qualifier() -> None:
+    assert tree_type_to_species("taxonomic_rank:genus:salix") == "Salix"
+
+
+def test_tree_type_to_species_agrees_across_spellings() -> None:
+    """The enum and qualifier spellings of one species must resolve identically."""
+    assert tree_type_to_species("taxonomic_rank:species:zanthoxylum_rhoifolium") == (
+        tree_type_to_species("SPECIES_ZANTHOXYLUM_RHOIFOLIUM")
+    )

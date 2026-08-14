@@ -114,8 +114,8 @@ def linearize_allometric_se(
     the standard deviation. The result is a single scalar SE (in tonnes) that
     can be used with ``ChaveModel.compute_agb_tonnes_with_linearized_error``.
 
-    This mirrors Mombak's ``linearize_allometry_errors`` approach: the additive
-    formulation is mean-preserving, unlike the raw multiplicative log-normal.
+    The additive formulation is mean-preserving; the raw multiplicative
+    log-normal is not.
     """
     baseline = model.compute_agb_tonnes(dbh_cm, height_m, wood_density_g_cm3)
     n_trees = len(dbh_cm)

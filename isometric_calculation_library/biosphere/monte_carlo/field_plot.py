@@ -33,8 +33,13 @@ class FieldPlot:
 
     plot_id: str
     trees: TreeMeasurements
-    plot_size_m: float
-    """Side length of the square plot in metres."""
+    area_m2: float
+    """Surveyed area of the plot in square metres, measured from its polygon.
+
+    Use :func:`~isometric_calculation_library.biosphere.monte_carlo.plot_geometry.plot_area_m2`
+    to derive an area from a nominal side length or radius when no polygon is
+    available.
+    """
 
     @property
     def num_trees(self) -> int:
@@ -42,7 +47,7 @@ class FieldPlot:
 
     @property
     def plot_area_ha(self) -> float:
-        return (self.plot_size_m**2) / M2_PER_HECTARE
+        return self.area_m2 / M2_PER_HECTARE
 
     def compute_tco2e_ha(
         self,

@@ -75,15 +75,27 @@ def list_species() -> list[str]:
 def tree_type_to_species(tree_type: str) -> str:
     """Convert a tree type qualifier name to a binomial species name.
 
-    Handles ``SPECIES_`` and ``GENUS_`` prefixed names as well as bare
-    underscore-separated names.  The first word is capitalised; subsequent
-    words are lowercased (standard binomial convention).
+    Accepts the enum spelling (``SPECIES_CECROPIA_OBTUSA``), the colon-delimited
+    qualifier spelling that activity data carries
+    (``taxonomic_rank:species:cecropia_obtusa``), and bare underscore-separated
+    names. The first word is capitalised and the rest lowercased, following
+    standard binomial convention.
+
+    Both spellings occur in practice: a measurement read through the activity
+    model carries the qualifier form, while older uploads carry the enum form.
 
     Example::
 
         >>> tree_type_to_species("SPECIES_CECROPIA_OBTUSA")
         'Cecropia obtusa'
+        >>> tree_type_to_species("taxonomic_rank:species:cecropia_obtusa")
+        'Cecropia obtusa'
     """
+    # The qualifier form namespaces the rank, e.g. taxonomic_rank:species:<name>,
+    # so the name is whatever follows the final delimiter.
+    if ":" in tree_type:
+        tree_type = tree_type.rsplit(":", 1)[-1]
+
     for prefix in ("SPECIES_", "GENUS_"):
         if tree_type.startswith(prefix):
             tree_type = tree_type[len(prefix) :]

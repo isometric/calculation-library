@@ -4,9 +4,8 @@
 
 """Monte Carlo error propagation for tree inventory measurements.
 
-Ported from the R BIOMASS package and Turmalina external notebooks. Propagates
-uncertainty through DBH measurement error, height model error, wood density
-species-level SD, and biomass-to-carbon ratio.
+Propagates uncertainty through DBH measurement error, height model error, wood
+density species-level SD, and biomass-to-carbon ratio.
 
 Allometric model error is handled by the allometric model classes themselves
 (e.g. ``ChaveModel.compute_agb_tonnes_with_error``).
