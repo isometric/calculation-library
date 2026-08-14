@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.41.0](https://github.com/isometric/calculation-library/releases/tag/v0.41.0)
+
+### Changed
+
+- `biosphere.allometric_equations.wood_density`: refreshed the wood density table from Mombak's July 2026 dataset. Adds `Adenanthera pavonina`, `Aegiphila sellowiana`, `Persea americana`, `Sapium argutum` and `Talisia esculenta`, and restates the species already present at the source dataset's full precision rather than the previously truncated values. `Alexa grandiflora` (0.36717 -> 0.66) and `Hymenaea intermedia` (0.85 -> 0.82) are corrections of values that matched no entry in the Global Wood Density Database; both new values reproduce its species mean exactly. Above-ground biomass quantified for plots containing either species changes accordingly. `Symmeria paniculata` is absent from the new dataset and keeps its existing values, as it remains a supported tree type
+
 ## [0.40.0](https://github.com/isometric/calculation-library/releases/tag/v0.40.0)
 
 ### Added
