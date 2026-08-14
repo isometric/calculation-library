@@ -6,6 +6,9 @@ from typing import Literal
 
 import numpy as np
 
+from isometric_calculation_library.enhanced_weathering.utils.conversions import (
+    compute_soil_mass_kg_ha,
+)
 from isometric_calculation_library.utils.types import Np1DArray
 
 type ImmobileTracer = Literal["Zr", "Ti"]
@@ -93,5 +96,8 @@ def compute_application_rate_from_tracer(
 
     app_rate_kg_ha = m * BD * depth_cm * 100
     """
-    soil_mass_kg_per_ha = soil_bulk_density_kg_m3 * depth_cm * 100
+    soil_mass_kg_per_ha = compute_soil_mass_kg_ha(
+        soil_bulk_density_kg_m3=soil_bulk_density_kg_m3,
+        depth_cm=depth_cm,
+    )
     return feedstock_soil_mass_ratio * soil_mass_kg_per_ha

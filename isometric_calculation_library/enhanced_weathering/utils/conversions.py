@@ -28,6 +28,54 @@ def _cation_to_charge(cation: Cation) -> int:
             return 1
 
 
+def compute_soil_mass_kg_ha(
+    *,
+    soil_bulk_density_kg_m3: float | Np1DArray[np.floating],
+    depth_cm: float,
+) -> float | Np1DArray[np.floating]:
+    """Mass of soil in one hectare to a given depth (kg/ha).
+
+    A hectare is 10,000 m2, so a layer ``depth_cm`` deep holds ``100 * depth_cm`` cubic
+    metres per hectare.
+    """
+    volume_m3_per_ha = 100 * depth_cm
+    return volume_m3_per_ha * soil_bulk_density_kg_m3
+
+
+def compute_feedstock_soil_mass_ratio(
+    *,
+    application_rate_kg_ha: float | Np1DArray[np.floating],
+    soil_bulk_density_kg_m3: float | Np1DArray[np.floating],
+    depth_cm: float,
+) -> Np1DArray[np.floating]:
+    """Rock-to-soil mass ratio ``r = R / (BD * D * 10000)`` (Eq. 22), as replicates.
+
+    Inputs can be bootstrap distributions, allowing an uncertain application rate and
+    multi-location bulk density to propagate instead of collapsing to point estimates
+    beforehand. These distributions must be the same length because they are paired
+    replicate-for-replicate rather than crossed, ensuring the rate and soil mass describe the
+    same draw within each replicate.
+    """
+    rate = np.atleast_1d(np.asarray(application_rate_kg_ha, dtype=float))
+    soil_mass_kg_ha = np.atleast_1d(
+        np.asarray(
+            compute_soil_mass_kg_ha(
+                soil_bulk_density_kg_m3=soil_bulk_density_kg_m3,
+                depth_cm=depth_cm,
+            ),
+            dtype=float,
+        ),
+    )
+    if len(rate) > 1 and len(soil_mass_kg_ha) > 1 and len(rate) != len(soil_mass_kg_ha):
+        raise ValueError(
+            f"application_rate_kg_ha has {len(rate)} replicates and "
+            f"soil_bulk_density_kg_m3 has {len(soil_mass_kg_ha)}. Bootstrap both over the "
+            "same number of runs so each replicate pairs a rate with the soil mass drawn "
+            "alongside it, or pass one of them as a scalar.",
+        )
+    return rate / soil_mass_kg_ha
+
+
 def convert_mg_kg_to_kg_ha(
     *,
     soil_mass_fraction_mg_kg: Np1DArray[np.floating],
@@ -35,8 +83,10 @@ def convert_mg_kg_to_kg_ha(
     depth_cm: float,
 ) -> Np1DArray[np.floating]:
     """Convert soil mass fraction from mg/kg to kg/ha."""
-    volume_m3_per_ha = 100 * depth_cm
-    soil_mass_kg_per_ha = volume_m3_per_ha * soil_bulk_density_kg_m3
+    soil_mass_kg_per_ha = compute_soil_mass_kg_ha(
+        soil_bulk_density_kg_m3=soil_bulk_density_kg_m3,
+        depth_cm=depth_cm,
+    )
     return soil_mass_fraction_mg_kg * soil_mass_kg_per_ha / 1e6
 
 
@@ -47,8 +97,10 @@ def convert_kg_ha_to_mg_kg(
     depth_cm: float,
 ) -> Np1DArray[np.floating]:
     """Convert mass per area from kg/ha to soil mass fraction mg/kg."""
-    volume_m3_per_ha = 100 * depth_cm
-    soil_mass_kg_per_ha = volume_m3_per_ha * soil_bulk_density_kg_m3
+    soil_mass_kg_per_ha = compute_soil_mass_kg_ha(
+        soil_bulk_density_kg_m3=soil_bulk_density_kg_m3,
+        depth_cm=depth_cm,
+    )
     return mass_per_area_kg_ha * 1e6 / soil_mass_kg_per_ha
 
 

@@ -2,6 +2,26 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.40.0](https://github.com/isometric/calculation-library/releases/tag/v0.40.0)
+
+### Added
+
+- `enhanced_weathering.utils.application_rate_derivation`: `derive_application_rate_from_post_application_samples`, `derive_application_rate_from_tracer`, `pool_cations_as_charge_equivalents`, `DerivedApplicationRate` - back-calculates the application rate a soil received, from either post-application (BLP) cation enrichment or an immobile tracer mass balance. Both return `DerivedApplicationRate`. The BLP route pools calcium, magnesium, sodium and potassium onto a charge-equivalent basis and inverts the mass balance once rather than per cation. Both routes take `paired` (default `True`): paired designs inner-join the two sampling events by location and resample them through shared bootstrap indices, unpaired designs resample each event independently and may have different sample counts per event. `DerivedApplicationRate` reports `n_baseline`, `n_post_application` and `paired`. Raises on fewer than `min_samples` paired locations or samples per event, a null measurement in either event or in the feedstock, or no physically valid replicate
+- `enhanced_weathering.utils.statistical_checks.application_rate`: `resolve_application_rate`, `ApplicationRateDecision` - selects the application rate to quantify with and builds the report row for that decision. The operational rate is accepted when it falls within `n_std` standard deviations of the soil-derived distribution, otherwise the lower of the two is used. The distribution is summarised by its median, reported alongside `p16` / `p84`; the median both decides which rate is lower and is what `rate_kg_ha` returns, as a scalar. Raises on a non-positive operational rate, a non-positive `n_std`, or a soil-derived distribution with no finite replicate
+- `enhanced_weathering.utils.pairing`: `require_complete_pairs`, `paired_column_names` - raises if any location in a `pair_locations` result is missing a measurement in the given columns, reporting the null count per column; and builds the `baseline_` / `reporting_period_` column names `pair_locations` produces
+- `enhanced_weathering.utils.resampling`: `resample_columns_together`, `resample_events_together`, `SamplingEventMeans` - bootstraps one or two sampling events across one or more value columns at once, sharing one set of indices across the columns of an event so a replicate is a coherent draw of samples. `paired` decides whether the two events also share that set. A single column is the one-entry case; `SamplingEventMeans.column` unpacks it back to a `(baseline, reporting_period)` pair
+- `enhanced_weathering.utils.data_cleaning`: `check_measured_values` - returns one column of measurements, raising if the column is absent, has no rows, or carries a null. The raise-loudly counterpart to `null_filter`, and the unpaired counterpart to `pairing.require_complete_pairs`
+- `enhanced_weathering.utils.conversions`: `compute_soil_mass_kg_ha`, `compute_feedstock_soil_mass_ratio` - soil mass per hectare to a given depth, and the rock-to-soil mass ratio `r = R / (BD * D * 10000)` built on it
+
+### Changed
+
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: `compute_power_analysis`'s `effective_application_rate_kg_ha` and `bulk_density_kg_m3` each accept a bootstrap distribution as well as a scalar. Eq. 22 is evaluated per replicate, and `PowerAnalysisResult` gains `delta_mg_kg_p16` / `delta_mg_kg_p84`. `delta_mg_kg` is now the median of that distribution; for scalar inputs all three are equal and results are unchanged. Two distributions are paired replicate-for-replicate rather than crossed and must be the same length; mismatched lengths raise, as does a rate and bulk density forming no finite mass ratio
+- `enhanced_weathering.utils.statistical_checks.weathering_signal`: `infer_post_application_concentrations`'s `application_rate_kg_ha` and `bulk_density_kg_m3` each accept a bootstrap distribution as well as a scalar. The mixing formula is applied at each replicate and the inferred concentrations pooled. Scalar inputs return one concentration per baseline sample, unchanged
+
+### Removed
+
+- `enhanced_weathering.utils.resampling`: `resample_dataframe_paired` and `resample_dataframe_unpaired` - superseded by `resample_events_together`, which covers one column or many through the same entry point. Callers pass the values as a one-entry mapping and unpack with `SamplingEventMeans.column`. Note the replacement is not numerically identical: it draws indices rather than values, keeps float64 where `resample_dataframe_unpaired` cast to float32 via `resample_mean`, and takes the mean rather than a `nan`-skipping mean, so a null in the input now propagates instead of being silently dropped
+
 ## [0.39.4](https://github.com/isometric/calculation-library/releases/tag/v0.39.4)
 
 Dependency version update.

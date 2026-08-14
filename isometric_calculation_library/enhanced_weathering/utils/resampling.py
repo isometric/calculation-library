@@ -3,6 +3,7 @@
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
 from collections.abc import Mapping, Sequence
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -19,54 +20,6 @@ def resample_mean(
     n_samples = len(values)
     resampled = rng.choice(values.astype(np.float32), size=(n_runs, n_samples), replace=True)
     return np.nanmean(resampled, axis=1)
-
-
-def resample_dataframe_unpaired(
-    rng: np.random.Generator,
-    baseline_df: pd.DataFrame,
-    end_of_reporting_period_df: pd.DataFrame,
-    column: str,
-    n_runs: int,
-) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating]]:
-    """Bootstrap resample a column from baseline and end-of-reporting-period DataFrames independently.
-
-    Returns:
-        Tuple of (baseline_means, end_of_reporting_period_means) each of length n_runs.
-    """
-    baseline_values = baseline_df[column].to_numpy()
-    end_values = end_of_reporting_period_df[column].to_numpy()
-    baseline_means = resample_mean(rng, baseline_values, n_runs)
-    end_means = resample_mean(rng, end_values, n_runs)
-    return baseline_means, end_means
-
-
-def resample_dataframe_paired(
-    rng: np.random.Generator,
-    paired_df: pd.DataFrame,
-    baseline_column: str,
-    end_of_reporting_period_column: str,
-    n_runs: int,
-) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating]]:
-    """Bootstrap resample paired baseline/end-of-reporting-period columns from a single DataFrame.
-
-    Expects a DataFrame with one row per paired location and the named
-    baseline / end-of-reporting-period value columns.
-
-    Returns:
-        Tuple of (baseline_means, end_of_reporting_period_means) each of length n_runs.
-    """
-    baseline_values = paired_df[baseline_column].to_numpy()
-    end_values = paired_df[end_of_reporting_period_column].to_numpy()
-
-    if len(baseline_values) != len(end_values):
-        msg = f"Paired arrays must have same length: {len(baseline_values)} != {len(end_values)}"
-        raise ValueError(msg)
-
-    n_pairs = len(baseline_values)
-    indices = rng.integers(0, n_pairs, size=(n_runs, n_pairs))
-    baseline_means = np.nanmean(baseline_values[indices], axis=1)
-    end_means = np.nanmean(end_values[indices], axis=1)
-    return baseline_means, end_means
 
 
 def bootstrap_bulk_density_unpaired(
@@ -237,3 +190,122 @@ def resample_by_group(
         end_means[i] = np.mean(end_values[loc_idx])
 
     return baseline_means, end_means
+
+
+class SamplingEventMeans(NamedTuple):
+    """Bootstrapped replicate means for two sampling events, keyed by value column."""
+
+    baseline: Mapping[str, Np1DArray[np.floating]]
+    reporting_period: Mapping[str, Np1DArray[np.floating]]
+
+    def column(self, name: str) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating]]:
+        """Both events' replicate means for one column, baseline first.
+
+        Unpacks the single-column case, which would otherwise have to index both mappings
+        by the same key.
+        """
+        return self.baseline[name], self.reporting_period[name]
+
+
+def _aligned_length(values: Mapping[str, Np1DArray[np.floating]], event: str) -> int:
+    """Length shared by every column of one event, raising if they disagree."""
+    if len(values) == 0:
+        raise ValueError(f"At least one value column is required to resample the {event}.")
+    lengths = {len(v) for v in values.values()}
+    if len(lengths) > 1:
+        raise ValueError(
+            f"Columns within the {event} must be aligned, got lengths {sorted(lengths)!r}.",
+        )
+    return next(iter(lengths))
+
+
+def _means_by_column(
+    values: Mapping[str, Np1DArray[np.floating]],
+    indices: np.ndarray,
+) -> dict[str, Np1DArray[np.floating]]:
+    """Apply one already-drawn index set to every column of an event."""
+    return {
+        col: compute_resampled_means_from_indices(column_values, indices)
+        for col, column_values in values.items()
+    }
+
+
+def resample_columns_together(
+    rng: np.random.Generator,
+    *,
+    values: Mapping[str, Np1DArray[np.floating]],
+    n_runs: int,
+    event: str,
+) -> dict[str, Np1DArray[np.floating]]:
+    """Bootstrap the mean of one sampling event across several value columns at once.
+
+    One index set is drawn and applied to every column, so the values a replicate combines
+    come from the same draw of samples. Resampling each column separately would let a
+    replicate mix samples, so anything combining columns afterwards — pooling cations onto a
+    charge-equivalent basis, say — would be summing values measured on different rock or soil.
+
+    Args:
+        rng: Random number generator.
+        values: Per-sample values keyed by column. All arrays must be the same length and
+            aligned, element i of each referring to the same physical sample.
+        n_runs: Bootstrap replicates.
+        event: What the samples are, for the error messages (e.g. ``"baseline event"``).
+    """
+    indices = generate_bootstrap_location_indices(rng, _aligned_length(values, event), n_runs)
+    return _means_by_column(values, indices)
+
+
+def resample_events_together(
+    rng: np.random.Generator,
+    *,
+    baseline_values: Mapping[str, Np1DArray[np.floating]],
+    reporting_period_values: Mapping[str, Np1DArray[np.floating]],
+    n_runs: int,
+    paired: bool,
+) -> SamplingEventMeans:
+    """Bootstrap the mean of two sampling events across one or more value columns at once.
+
+    One index set is shared across all columns of an event, so a replicate is a coherent draw
+    of samples. Drawing per column instead would let a replicate mix samples, and a caller
+    that then combines columns within a replicate — pooling cations onto a charge-equivalent
+    basis, say — would be summing values that do not describe the same soil.
+
+    A single column is the one-entry case; use ``SamplingEventMeans.column`` to unpack it.
+
+    ``paired`` decides whether the two *events* also share that index set: True when the rows
+    are matched by location (e.g. from ``pair_locations``), so the spatial variance the two
+    events share cancels; False when they are independent, in which case they may also have
+    different lengths.
+
+    Args:
+        rng: Random number generator.
+        baseline_values: Per-location values keyed by column. All arrays must be the same
+            length and aligned, element i of each referring to the same location.
+        reporting_period_values: The same columns for the reporting-period event. Must be the
+            same length as ``baseline_values`` when ``paired``.
+        n_runs: Bootstrap replicates.
+        paired: Whether the two events are matched by location.
+    """
+    if set(baseline_values) != set(reporting_period_values):
+        raise ValueError(
+            f"Both events must carry the same columns, got {sorted(baseline_values)!r} and "
+            f"{sorted(reporting_period_values)!r}.",
+        )
+    n_baseline = _aligned_length(baseline_values, "baseline event")
+    n_reporting_period = _aligned_length(reporting_period_values, "reporting-period event")
+    if paired and n_baseline != n_reporting_period:
+        raise ValueError(
+            f"A paired design needs one row per matched location in both events, got "
+            f"{n_baseline} baseline and {n_reporting_period} reporting-period rows.",
+        )
+
+    baseline_indices = generate_bootstrap_location_indices(rng, n_baseline, n_runs)
+    reporting_period_indices = (
+        baseline_indices
+        if paired
+        else generate_bootstrap_location_indices(rng, n_reporting_period, n_runs)
+    )
+    return SamplingEventMeans(
+        baseline=_means_by_column(baseline_values, baseline_indices),
+        reporting_period=_means_by_column(reporting_period_values, reporting_period_indices),
+    )

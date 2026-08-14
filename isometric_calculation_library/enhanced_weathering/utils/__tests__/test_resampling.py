@@ -8,6 +8,8 @@ import pytest
 from isometric_calculation_library.enhanced_weathering.utils.resampling import (
     compute_resampled_means_from_indices,
     generate_bootstrap_location_indices,
+    resample_columns_together,
+    resample_events_together,
     summarize_distributions,
 )
 
@@ -155,3 +157,142 @@ def test_summarize_distributions_values_are_consistent() -> None:
     assert (
         row["p5"] < row["p16"] < row["p30"] < row["p40"] < row["median"] < row["p84"] < row["p95"]
     )
+
+
+def test_resample_events_together_shares_one_draw_across_columns() -> None:
+    """Within a replicate every column comes from the same locations.
+
+    This is the reason the multi-column form exists: resampling each column separately
+    would let a replicate mix locations, so anything combining columns within a replicate
+    would be summing values that do not describe the same soil.
+    """
+    # Two columns that are exact multiples of each other, so a shared draw keeps the ratio
+    # exact in every replicate while independent draws would break it.
+    values = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    means = resample_events_together(
+        np.random.default_rng(0),
+        baseline_values={"a": values, "b": values * 10},
+        reporting_period_values={"a": values, "b": values * 10},
+        n_runs=500,
+        paired=True,
+    )
+
+    assert np.allclose(means.baseline["b"], means.baseline["a"] * 10)
+    assert np.allclose(means.reporting_period["b"], means.reporting_period["a"] * 10)
+
+
+def test_column_unpacks_both_events_baseline_first() -> None:
+    """The single-column accessor returns the same arrays as indexing both mappings."""
+    values = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    means = resample_events_together(
+        np.random.default_rng(0),
+        baseline_values={"a": values},
+        reporting_period_values={"a": values * 10},
+        n_runs=100,
+        paired=True,
+    )
+
+    baseline, reporting_period = means.column("a")
+
+    assert baseline is means.baseline["a"]
+    assert reporting_period is means.reporting_period["a"]
+
+
+def test_resample_events_together_paired_shares_the_draw_between_events() -> None:
+    """A paired design draws once for both events, so a perfect correlation survives."""
+    values = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    paired = resample_events_together(
+        np.random.default_rng(0),
+        baseline_values={"a": values},
+        reporting_period_values={"a": values},
+        n_runs=500,
+        paired=True,
+    )
+    unpaired = resample_events_together(
+        np.random.default_rng(0),
+        baseline_values={"a": values},
+        reporting_period_values={"a": values},
+        n_runs=500,
+        paired=False,
+    )
+
+    assert np.allclose(paired.baseline["a"], paired.reporting_period["a"])
+    assert not np.allclose(unpaired.baseline["a"], unpaired.reporting_period["a"])
+
+
+def test_resample_events_together_unpaired_allows_different_event_sizes() -> None:
+    means = resample_events_together(
+        np.random.default_rng(0),
+        baseline_values={"a": np.arange(10, dtype=float)},
+        reporting_period_values={"a": np.arange(4, dtype=float)},
+        n_runs=50,
+        paired=False,
+    )
+
+    assert len(means.baseline["a"]) == 50
+    assert len(means.reporting_period["a"]) == 50
+
+
+def test_resample_events_together_paired_rejects_different_event_sizes() -> None:
+    """Unequal lengths mean the rows are not matched, so the pairing claim is false."""
+    with pytest.raises(ValueError, match="one row per matched location"):
+        resample_events_together(
+            np.random.default_rng(0),
+            baseline_values={"a": np.arange(10, dtype=float)},
+            reporting_period_values={"a": np.arange(4, dtype=float)},
+            n_runs=50,
+            paired=True,
+        )
+
+
+def test_resample_events_together_rejects_misaligned_columns_within_an_event() -> None:
+    with pytest.raises(ValueError, match="Columns within the baseline event must be aligned"):
+        resample_events_together(
+            np.random.default_rng(0),
+            baseline_values={"a": np.arange(10, dtype=float), "b": np.arange(4, dtype=float)},
+            reporting_period_values={
+                "a": np.arange(10, dtype=float),
+                "b": np.arange(10, dtype=float),
+            },
+            n_runs=50,
+            paired=False,
+        )
+
+
+def test_resample_events_together_rejects_mismatched_column_sets() -> None:
+    with pytest.raises(ValueError, match="same columns"):
+        resample_events_together(
+            np.random.default_rng(0),
+            baseline_values={"a": np.arange(10, dtype=float)},
+            reporting_period_values={"b": np.arange(10, dtype=float)},
+            n_runs=50,
+            paired=False,
+        )
+
+
+def test_resample_columns_together_shares_one_draw_across_columns() -> None:
+    """Columns measured on the same physical samples share a draw, so ratios survive.
+
+    Feedstock cations rely on this: Ca and Mg come off the same rock samples, so pooling
+    them per replicate is only meaningful if the replicate drew one set of samples.
+    """
+    values = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    means = resample_columns_together(
+        np.random.default_rng(0),
+        values={"ca": values, "mg": values * 10},
+        n_runs=500,
+        event="feedstock samples",
+    )
+
+    assert np.allclose(means["mg"], means["ca"] * 10)
+
+
+def test_resample_columns_together_rejects_misaligned_columns() -> None:
+    """The caller names the event, so the message points at which one is misaligned."""
+    with pytest.raises(ValueError, match="Columns within the feedstock samples must be aligned"):
+        resample_columns_together(
+            np.random.default_rng(0),
+            values={"ca": np.arange(5, dtype=float), "mg": np.arange(3, dtype=float)},
+            n_runs=10,
+            event="feedstock samples",
+        )

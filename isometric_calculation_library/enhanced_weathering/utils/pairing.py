@@ -64,3 +64,48 @@ def pair_locations(
         n_baseline_only=len(baseline_agg) - len(paired),
         n_reporting_period_only=len(reporting_period_agg) - len(paired),
     )
+
+
+def paired_column_names(value_columns: Sequence[str]) -> list[str]:
+    """The ``baseline_`` / ``reporting_period_`` column names ``pair_locations`` produces.
+
+    Callers hold the unprefixed names they passed in, but read and validate the prefixed
+    ones, so the prefixes are spelled once here alongside the join that applies them.
+    """
+    return [
+        f"{prefix}_{col}" for col in value_columns for prefix in ("baseline", "reporting_period")
+    ]
+
+
+def require_complete_pairs(paired: pd.DataFrame, value_columns: Sequence[str]) -> None:
+    """Raise if any paired location is missing a measurement in ``value_columns``.
+
+    ``pair_locations`` inner-joins, so a null in its output is a missing measurement at a
+    location present in both sampling events, not an unmatched location. Dropping those rows
+    would change which locations back a result, so callers that depend on the pairing
+    validate here and leave the choice of how to handle missing data to their own caller.
+
+    Args:
+        paired: Output of ``pair_locations``.
+        value_columns: Prefixed column names to check, e.g. ``baseline_mass_fraction_ca``.
+    """
+    missing = [col for col in value_columns if col not in paired.columns]
+    if missing:
+        raise ValueError(
+            f"Expected columns {missing!r} not found in the paired data "
+            f"(available: {list(paired.columns)!r}).",
+        )
+
+    null_mask = paired[list(value_columns)].isna()
+    per_column = null_mask.sum()
+    null_counts = {col: int(per_column[col]) for col in value_columns if int(per_column[col]) > 0}
+    if len(null_counts) > 0:
+        # Counted off the row-wise mask, not by summing the per-column counts, so a location
+        # null in two columns is one affected location rather than two.
+        n_affected = int(null_mask.any(axis=1).sum())
+        raise ValueError(
+            f"{n_affected} of {len(paired)} paired location(s) carry null measurements "
+            f"(nulls per column: {null_counts!r}). Drop or impute them before calling, so "
+            "the locations backing the result are chosen explicitly rather than by a silent "
+            "per-column drop.",
+        )

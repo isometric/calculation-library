@@ -18,6 +18,9 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+from isometric_calculation_library.enhanced_weathering.utils.conversions import (
+    compute_feedstock_soil_mass_ratio,
+)
 from isometric_calculation_library.enhanced_weathering.utils.types import (
     mass_fraction_column_name,
 )
@@ -57,8 +60,8 @@ def infer_post_application_concentrations(
     *,
     baseline_concentrations_mg_kg: Np1DArray[np.floating],
     feedstock_concentration_mg_kg: float,
-    application_rate_kg_ha: float,
-    bulk_density_kg_m3: float,
+    application_rate_kg_ha: float | Np1DArray[np.floating],
+    bulk_density_kg_m3: float | Np1DArray[np.floating],
     depth_cm: float,
 ) -> Np1DArray[np.floating]:
     """Infer per-sample post-application cation concentrations by applying the mixing formula to each baseline sample.
@@ -66,16 +69,37 @@ def infer_post_application_concentrations(
     Args:
         baseline_concentrations_mg_kg: Baseline cation concentrations per sample.
         feedstock_concentration_mg_kg: Mean feedstock cation concentration.
-        application_rate_kg_ha: Known feedstock application rate in kg/ha.
-        bulk_density_kg_m3: Mean soil bulk density in kg/m3.
+        application_rate_kg_ha: Known feedstock application rate in kg/ha. Pass a bootstrap
+            distribution when the rate is itself uncertain (e.g. inverted from BLP
+            enrichment); the mixing formula is then applied at each rate replicate and the
+            returned array is the pooled set of inferred concentrations, so the rate's
+            uncertainty is carried into the significance test rather than discarded. A
+            scalar returns one concentration per baseline sample.
+        bulk_density_kg_m3: Soil bulk density in kg/m3. Like the rate, this may be a
+            bootstrap distribution when several bulk densities were measured, in which case
+            its spread reaches the test too; the two must then have equal length.
         depth_cm: Sampling depth in cm.
     """
-    soil_mass_kg_ha = bulk_density_kg_m3 * depth_cm * 100
-    mass_ratio = application_rate_kg_ha / soil_mass_kg_ha
-
-    return (baseline_concentrations_mg_kg + mass_ratio * feedstock_concentration_mg_kg) / (
-        1 + mass_ratio
+    mass_ratio = compute_feedstock_soil_mass_ratio(
+        application_rate_kg_ha=application_rate_kg_ha,
+        soil_bulk_density_kg_m3=bulk_density_kg_m3,
+        depth_cm=depth_cm,
     )
+
+    # Outer product over (mass-ratio replicate, baseline sample), then flattened: the test
+    # compares populations, so the pooled set carries both sources of spread. A scalar rate
+    # and bulk density give a single replicate, hence one concentration per baseline sample.
+    finite_mass_ratio = mass_ratio[np.isfinite(mass_ratio)]
+    if len(finite_mass_ratio) == 0:
+        raise ValueError(
+            "No finite rock-to-soil mass ratio could be formed from application_rate_kg_ha "
+            "and bulk_density_kg_m3, so no post-application concentration can be inferred.",
+        )
+    ratio_column = finite_mass_ratio[:, np.newaxis]
+    inferred = (
+        baseline_concentrations_mg_kg[np.newaxis, :] + ratio_column * feedstock_concentration_mg_kg
+    ) / (1 + ratio_column)
+    return inferred.reshape(-1)
 
 
 def check_weathering_significance(

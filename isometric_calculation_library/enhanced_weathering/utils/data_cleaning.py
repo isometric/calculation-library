@@ -12,6 +12,8 @@ from typing import NamedTuple, override
 import numpy as np
 import pandas as pd
 
+from isometric_calculation_library.utils.types import Np1DArray
+
 logger = logging.getLogger(__name__)
 
 
@@ -174,6 +176,43 @@ def null_filter(
         n_samples_flagged=n_flagged,
         n_samples_dropped=n_dropped,
     )
+
+
+def check_measured_values(
+    samples: pd.DataFrame,
+    column: str,
+    *,
+    source: str,
+) -> Np1DArray[np.floating]:
+    """Check that every sample measured ``column``, returning those measurements.
+
+    The single-event counterpart to ``pairing.require_complete_pairs``: with no inner join
+    to filter them, a null would otherwise reach a ``nan``-skipping aggregate and be
+    silently dropped from whichever mean or variance it feeds.
+
+    Args:
+        samples: Samples to read the column from.
+        column: Mass fraction column to read.
+        source: What the samples are, for the error messages (e.g. ``"feedstock sample"``).
+    """
+    if column not in samples.columns:
+        raise ValueError(
+            f"Expected column {column!r} not found in the {source}s "
+            f"(available: {list(samples.columns)!r}).",
+        )
+    values = samples[column]
+    if len(values) == 0:
+        raise ValueError(
+            f"There are no {source}s, so {column!r} has no measured values.",
+        )
+    n_null = int(values.isna().sum())
+    if n_null > 0:
+        raise ValueError(
+            f"{n_null} of {len(values)} {source}s have a null {column!r}. Drop or impute "
+            "them before calling, so the measurements backing the result are chosen "
+            "explicitly rather than by a silent drop.",
+        )
+    return values.to_numpy(dtype=float)
 
 
 def iterative_sigma_clip(

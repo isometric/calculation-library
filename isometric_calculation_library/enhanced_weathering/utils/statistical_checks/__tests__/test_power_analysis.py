@@ -214,3 +214,143 @@ def test_power_analysis_raises_on_too_few_samples() -> None:
             sampling_depth_cm=7.5,
             elements=["Ti"],
         )
+
+
+def test_distributed_bulk_density_widens_the_expected_enrichment() -> None:
+    """Bulk density measured at several locations carries its spread into Eq. 22."""
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(100, rng)
+    bulk_densities = np.random.default_rng(7).normal(1580.0, 150.0, 2_000)
+
+    distributed = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=5000.0,
+        n_eff=100.0,
+        bulk_density_kg_m3=bulk_densities,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+    fixed = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=5000.0,
+        n_eff=100.0,
+        bulk_density_kg_m3=float(np.mean(bulk_densities)),
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+
+    assert distributed[0].delta_mg_kg_p84 > distributed[0].delta_mg_kg_p16
+    assert fixed[0].delta_mg_kg_p84 == pytest.approx(fixed[0].delta_mg_kg_p16)
+    # The median tracks the fixed case; only the spread is new.
+    assert distributed[0].delta_mg_kg == pytest.approx(fixed[0].delta_mg_kg, rel=0.02)
+
+
+def test_power_analysis_rejects_mismatched_rate_and_bulk_density_replicates() -> None:
+    """Unequal distributions cannot be paired, and must not silently broadcast."""
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(50, rng)
+
+    with pytest.raises(ValueError, match="same number of runs"):
+        compute_power_analysis(
+            paired=paired,
+            feedstock_concentrations={"Ti": 17000.0},
+            effective_application_rate_kg_ha=np.array([4000.0, 5000.0, 6000.0]),
+            n_eff=50.0,
+            bulk_density_kg_m3=np.array([1500.0, 1600.0]),
+            sampling_depth_cm=7.5,
+            elements=["Ti"],
+        )
+
+
+def test_scalar_rate_leaves_delta_percentiles_equal_to_the_median() -> None:
+    """A scalar rate is a distribution of one, so the spread collapses."""
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(100, rng)
+
+    results = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=5000.0,
+        n_eff=100.0,
+        bulk_density_kg_m3=1580.0,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+
+    assert results[0].delta_mg_kg_p16 == pytest.approx(results[0].delta_mg_kg)
+    assert results[0].delta_mg_kg_p84 == pytest.approx(results[0].delta_mg_kg)
+
+
+def test_distributed_rate_matches_its_own_median_as_a_scalar() -> None:
+    """The reported delta is the median enrichment, so a symmetric rate agrees with its p50."""
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(100, rng)
+
+    scalar = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=5000.0,
+        n_eff=100.0,
+        bulk_density_kg_m3=1580.0,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+    distributed = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=rng.normal(5000.0, 250.0, size=20_000),
+        n_eff=100.0,
+        bulk_density_kg_m3=1580.0,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+
+    assert distributed[0].delta_mg_kg == pytest.approx(scalar[0].delta_mg_kg, rel=1e-2)
+    # The rate is uncertain, so the expected enrichment now has real spread.
+    assert distributed[0].delta_mg_kg_p16 < distributed[0].delta_mg_kg
+    assert distributed[0].delta_mg_kg_p84 > distributed[0].delta_mg_kg
+
+
+def test_distributed_rate_ignores_nan_replicates() -> None:
+    """Non-physical replicates must not drag the median enrichment down."""
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(100, rng)
+    rate = np.concatenate([np.full(5_000, 5000.0), np.full(5_000, np.nan)])
+
+    results = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=rate,
+        n_eff=100.0,
+        bulk_density_kg_m3=1580.0,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+    scalar = compute_power_analysis(
+        paired=paired,
+        feedstock_concentrations={"Ti": 17000.0},
+        effective_application_rate_kg_ha=5000.0,
+        n_eff=100.0,
+        bulk_density_kg_m3=1580.0,
+        sampling_depth_cm=7.5,
+        elements=["Ti"],
+    )
+
+    assert results[0].delta_mg_kg == pytest.approx(scalar[0].delta_mg_kg)
+
+
+def test_all_nan_rate_raises() -> None:
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(100, rng)
+    with pytest.raises(ValueError, match="No finite rock-to-soil mass ratio"):
+        compute_power_analysis(
+            paired=paired,
+            feedstock_concentrations={"Ti": 17000.0},
+            effective_application_rate_kg_ha=np.full(100, np.nan),
+            n_eff=100.0,
+            bulk_density_kg_m3=1580.0,
+            sampling_depth_cm=7.5,
+            elements=["Ti"],
+        )

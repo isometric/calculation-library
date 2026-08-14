@@ -48,6 +48,173 @@ def test_infer_post_application_zero_app_rate_returns_baseline() -> None:
     np.testing.assert_allclose(result, baseline_concentrations_mg_kg)
 
 
+def test_infer_post_application_distributed_rate_pools_every_replicate() -> None:
+    """Each rate replicate is mixed against every baseline sample, then pooled."""
+    baseline_concentrations_mg_kg = np.array([100.0, 120.0, 110.0])
+    rates = np.array([10_000.0, 15_000.0])
+
+    result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=rates,
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+
+    expected = np.concatenate([
+        infer_post_application_concentrations(
+            baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+            feedstock_concentration_mg_kg=5000.0,
+            application_rate_kg_ha=float(rate),
+            bulk_density_kg_m3=1000.0,
+            depth_cm=30.0,
+        )
+        for rate in rates
+    ])
+    assert len(result) == len(baseline_concentrations_mg_kg) * len(rates)
+    np.testing.assert_allclose(np.sort(result), np.sort(expected))
+
+
+def test_infer_post_application_distributed_bulk_density_pools_every_replicate() -> None:
+    """Bulk density measured at several locations propagates like an uncertain rate does."""
+    baseline_concentrations_mg_kg = np.array([100.0, 120.0, 110.0])
+    bulk_densities = np.array([900.0, 1100.0])
+
+    result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=15_000.0,
+        bulk_density_kg_m3=bulk_densities,
+        depth_cm=30.0,
+    )
+
+    expected = np.concatenate([
+        infer_post_application_concentrations(
+            baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+            feedstock_concentration_mg_kg=5000.0,
+            application_rate_kg_ha=15_000.0,
+            bulk_density_kg_m3=float(bulk_density),
+            depth_cm=30.0,
+        )
+        for bulk_density in bulk_densities
+    ])
+    assert len(result) == len(baseline_concentrations_mg_kg) * len(bulk_densities)
+    np.testing.assert_allclose(np.sort(result), np.sort(expected))
+
+
+def test_infer_post_application_pairs_rate_and_bulk_density_replicates() -> None:
+    """Two distributions are paired replicate-for-replicate, not crossed."""
+    baseline_concentrations_mg_kg = np.array([100.0])
+    rates = np.array([10_000.0, 20_000.0])
+    bulk_densities = np.array([900.0, 1100.0])
+
+    result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=rates,
+        bulk_density_kg_m3=bulk_densities,
+        depth_cm=30.0,
+    )
+
+    # Crossing them would give four values; pairing gives one per replicate.
+    assert len(result) == 2
+    expected = [
+        float(
+            infer_post_application_concentrations(
+                baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+                feedstock_concentration_mg_kg=5000.0,
+                application_rate_kg_ha=float(rate),
+                bulk_density_kg_m3=float(bulk_density),
+                depth_cm=30.0,
+            )[0],
+        )
+        for rate, bulk_density in zip(rates, bulk_densities, strict=True)
+    ]
+    np.testing.assert_allclose(np.sort(result), np.sort(expected))
+
+
+def test_infer_post_application_rejects_mismatched_replicate_counts() -> None:
+    """Unequal distributions cannot be paired, and must not silently broadcast."""
+    with pytest.raises(ValueError, match="same number of runs"):
+        infer_post_application_concentrations(
+            baseline_concentrations_mg_kg=np.array([100.0]),
+            feedstock_concentration_mg_kg=5000.0,
+            application_rate_kg_ha=np.array([10_000.0, 20_000.0, 30_000.0]),
+            bulk_density_kg_m3=np.array([900.0, 1100.0]),
+            depth_cm=30.0,
+        )
+
+
+def test_infer_post_application_single_element_rate_array_matches_scalar() -> None:
+    """A one-replicate distribution must agree with the equivalent scalar call."""
+    baseline_concentrations_mg_kg = np.array([100.0, 120.0, 110.0])
+
+    array_result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=np.array([15_000.0]),
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+    scalar_result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=15_000.0,
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+    np.testing.assert_allclose(array_result, scalar_result)
+
+
+def test_infer_post_application_distributed_rate_widens_the_population() -> None:
+    """An uncertain rate must add spread the scalar call cannot express."""
+    rng = np.random.default_rng(42)
+    baseline_concentrations_mg_kg = rng.normal(100.0, 5.0, size=40)
+
+    scalar = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=15_000.0,
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+    distributed = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=rng.normal(15_000.0, 3_000.0, size=500),
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+
+    assert np.std(distributed) > np.std(scalar)
+
+
+def test_infer_post_application_ignores_nan_rate_replicates() -> None:
+    """Non-physical replicates are dropped rather than poisoning the population."""
+    baseline_concentrations_mg_kg = np.array([100.0, 120.0])
+    result = infer_post_application_concentrations(
+        baseline_concentrations_mg_kg=baseline_concentrations_mg_kg,
+        feedstock_concentration_mg_kg=5000.0,
+        application_rate_kg_ha=np.array([15_000.0, np.nan]),
+        bulk_density_kg_m3=1000.0,
+        depth_cm=30.0,
+    )
+
+    assert len(result) == len(baseline_concentrations_mg_kg)
+    assert np.all(np.isfinite(result))
+
+
+def test_infer_post_application_all_nan_rate_raises() -> None:
+    with pytest.raises(ValueError, match="No finite rock-to-soil mass ratio"):
+        infer_post_application_concentrations(
+            baseline_concentrations_mg_kg=np.array([100.0, 120.0]),
+            feedstock_concentration_mg_kg=5000.0,
+            application_rate_kg_ha=np.full(10, np.nan),
+            bulk_density_kg_m3=1000.0,
+            depth_cm=30.0,
+        )
+
+
 def test_significance_detects_clear_decrease() -> None:
     """Large decrease from post-application to end-of-rp should be significant."""
     rng = np.random.default_rng(42)
