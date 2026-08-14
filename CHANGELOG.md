@@ -2,6 +2,13 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.43.0](https://github.com/isometric/calculation-library/releases/tag/v0.43.0)
+
+### Added
+
+- `hidden.biosphere.lidar.stats`: `canopy_height_p99` - 99th-percentile canopy height, added to every statistics path so it can be used as an upper-canopy regressor
+- `hidden.biosphere.lidar.stats`: `segmented_percentile` - per-segment percentile over a concatenated pixel array, for the `reduceat`-based zonal statistics paths
+
 ## [0.42.0](https://github.com/isometric/calculation-library/releases/tag/v0.42.0)
 
 ### Added
