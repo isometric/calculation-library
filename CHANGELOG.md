@@ -2,6 +2,19 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.44.0](https://github.com/isometric/calculation-library/releases/tag/v0.44.0)
+
+### Added
+
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: `compute_power_analysis_paired` - power analysis for a matched-location design. Eq. 23's noise term is the variance of the within-pair difference (reporting-period minus baseline at the same location), `sigma_bl^2 + sigma_rp^2 - 2*rho*sigma_bl*sigma_rp`, in place of the unpaired `sigma_bl^2 + sigma_rp^2`. Takes the same arguments as the unpaired variant and expects a DataFrame matched by location, e.g. from `pairing.pair_locations`. Eq. 22 is identical between the two variants
+
+### Changed
+
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: `compute_power_analysis` renamed to `compute_power_analysis_unpaired`, matching the paired/unpaired naming used elsewhere in this package. It now takes the two sampling events as separate `baseline_samples` / `reporting_period_samples` frames with unprefixed `mass_fraction_<element>` columns, in place of one location-matched frame. The two may hold different numbers of samples, which the protocol allows and an unpaired variance never required. `compute_power_analysis_paired` continues to take the matched `paired` frame. Each variant now validates its own input — `pairing.require_complete_pairs` for the matched frame, `data_cleaning.check_measured_values` per event otherwise — in place of the previous per-column `dropna`
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: `compute_power_analysis_unpaired`'s Eq. 23 noise term is now `sigma_bl^2 + sigma_rp^2 / k` with `k = n_reporting_period / n_baseline`, the protocol's unequal-allocation form, in place of `sigma_bl^2 + sigma_rp^2`. `n_required` is correspondingly a count of baseline samples, the reporting-period event assumed to scale at the same ratio. Equal-sized events give `k = 1` and results are unchanged, so this only bites once the two events differ in size — which the separate-frames signature above is what first allows
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: both variants' `elements` narrows from `Sequence[str]` to `Sequence[ElementSymbol]`, and the column name comes from `enhanced_weathering.utils.types.mass_fraction_column_name` rather than a local duplicate of it
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: `PowerAnalysisResult` gains `sigma_diff`, populated by the paired variant and `None` for the unpaired one, which has no matching to difference across. `n_actual` is replaced by `n_baseline` and `n_reporting_period`, since the two events can now differ in size; both equal the matched-location count for a paired design
+
 ## [0.43.0](https://github.com/isometric/calculation-library/releases/tag/v0.43.0)
 
 ### Added
