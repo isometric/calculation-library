@@ -18,8 +18,9 @@ can treat them interchangeably. What differs is the measurement that pins the mi
   dissolve congruently from the same rock and charge equivalents are the basis CDR is
   proportional to.
 
-- **Immobile tracer.** A tracer that does not weather (Zr, Ti) traces the feedstock mass
-  directly, so no pre-weathering sample is needed and the reporting-period soil can be used::
+- **Immobile tracer.** A tracer that does not weather (see ``ImmobileTracer``) traces the
+  feedstock mass directly, so no pre-weathering sample is needed and the reporting-period
+  soil can be used::
 
       m = (T_rp - T_bl) / (T_feed - T_rp)
 
@@ -355,7 +356,8 @@ def derive_application_rate_from_tracer(
         feedstock_samples: Feedstock composition samples, same tracer column.
         bulk_density_values_kg_m3: Measured bulk densities to bootstrap over (kg/m3).
         depth_cm: Depth of the sampled soil layer, in centimetres.
-        tracer: Immobile tracer element (``"Zr"`` or ``"Ti"``).
+        tracer: Immobile tracer element. See ``ImmobileTracer`` for which are accepted and
+            the caveat on copper.
         n_runs: Bootstrap replicates.
         rng: Random number generator.
         paired: Whether the sampling plan revisits the same locations in both events. When

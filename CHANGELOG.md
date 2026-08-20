@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.46.0](https://github.com/isometric/calculation-library/releases/tag/v0.46.0)
+
+### Changed
+
+- `enhanced_weathering.utils.tracer`: `ImmobileTracer` accepts `"Cu"` alongside `"Zr"` and `"Ti"`, so a deployment that characterises copper can quantify against it without the caller suppressing a type error. No calculation changes: the tracer element only selects which mass fraction column is read and labels the derivation method, and the resolvability and mass-balance arithmetic is element-agnostic. Copper is weakly mobile - it sorbs to organic matter, is taken up by plants, and is applied in some fungicides - so its docstring notes that a model using it should read the tracer resolvability output, and treat a soil-derived application rate well above the operational one as a sign the tracer is not behaving conservatively
+
 ## [0.45.0](https://github.com/isometric/calculation-library/releases/tag/v0.45.0)
 
 ### Added

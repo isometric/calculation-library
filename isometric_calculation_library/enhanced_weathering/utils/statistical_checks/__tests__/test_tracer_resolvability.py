@@ -61,3 +61,38 @@ def test_calculate_tracer_resolvability_raises_on_zero_mass() -> None:
             feedstock_tracer_mg_kg=np.array([5000.0, 5100.0]),
             baseline_treatment_tracer_mg_kg=np.array([100.0, 110.0]),
         )
+
+
+def test_build_tracer_resolvability_df_accepts_copper() -> None:
+    """Copper is an accepted tracer, read from its own mass fraction column.
+
+    The index is computed from the arrays alone, so it matches what titanium would give
+    for the same numbers — the element only selects the column.
+    """
+    rng = np.random.default_rng(42)
+    copper_samples = pd.DataFrame({"mass_fraction_cu": rng.normal(100, 10, size=20)})
+    titanium_samples = copper_samples.rename(columns={"mass_fraction_cu": "mass_fraction_ti"})
+    feedstock_tracer = rng.normal(5000, 200, size=10)
+    bulk_density = rng.normal(1200, 50, size=15)
+
+    copper = build_tracer_resolvability_df(
+        baseline_samples=copper_samples,
+        feedstock_tracer_values=feedstock_tracer,
+        bulk_density_values=bulk_density,
+        area_ha=10.0,
+        application_rate_kg_ha=15_000.0,
+        tracer="Cu",
+        sampling_depth_cm=30.0,
+    )
+    titanium = build_tracer_resolvability_df(
+        baseline_samples=titanium_samples,
+        feedstock_tracer_values=feedstock_tracer,
+        bulk_density_values=bulk_density,
+        area_ha=10.0,
+        application_rate_kg_ha=15_000.0,
+        tracer="Ti",
+        sampling_depth_cm=30.0,
+    )
+
+    assert copper["resolvability_index"].iloc[0] == titanium["resolvability_index"].iloc[0]
+    assert copper["n_baseline_samples"].iloc[0] == 20
