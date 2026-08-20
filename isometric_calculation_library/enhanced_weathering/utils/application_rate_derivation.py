@@ -356,8 +356,7 @@ def derive_application_rate_from_tracer(
         feedstock_samples: Feedstock composition samples, same tracer column.
         bulk_density_values_kg_m3: Measured bulk densities to bootstrap over (kg/m3).
         depth_cm: Depth of the sampled soil layer, in centimetres.
-        tracer: Immobile tracer element. See ``ImmobileTracer`` for which are accepted and
-            the caveat on copper.
+        tracer: Immobile tracer element. See ``ImmobileTracer`` for the accepted elements.
         n_runs: Bootstrap replicates.
         rng: Random number generator.
         paired: Whether the sampling plan revisits the same locations in both events. When

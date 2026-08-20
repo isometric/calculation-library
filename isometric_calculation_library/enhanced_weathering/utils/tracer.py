@@ -12,16 +12,7 @@ from isometric_calculation_library.enhanced_weathering.utils.conversions import 
 from isometric_calculation_library.utils.types import Np1DArray
 
 type ImmobileTracer = Literal["Zr", "Ti", "Cu"]
-"""Tracer elements accepted for the feedstock-soil mass balance.
-
-Zirconium and titanium are the conservative choices: both sit in resistant phases and are
-effectively immobile over a reporting period, so an enrichment traces feedstock mass.
-
-Copper is admitted because deployments characterise it, but it is weakly mobile — it sorbs
-to organic matter, is taken up by plants, and is applied in some fungicides. A model using
-it should read the tracer resolvability output before trusting the result, and treat a
-soil-derived application rate well above the operational one as a sign the tracer is not
-behaving conservatively."""
+"""Tracer elements accepted for the feedstock-soil mass balance."""
 
 
 def compute_mass_ratio_from_immobile_tracer(

@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.46.1](https://github.com/isometric/calculation-library/releases/tag/v0.46.1)
+
+### Changed
+
+- `enhanced_weathering.utils.tracer`: the `ImmobileTracer` docstring is now a single line naming what the alias is for. Which tracer element is appropriate for a deployment, and the mobility caveats that bear on that choice, are documented in the protocols rather than in the library, superseding the copper caveat added in 0.46.0. `"Zr"`, `"Ti"` and `"Cu"` all remain accepted and there are no calculation changes
+
 ## [0.46.0](https://github.com/isometric/calculation-library/releases/tag/v0.46.0)
 
 ### Changed
