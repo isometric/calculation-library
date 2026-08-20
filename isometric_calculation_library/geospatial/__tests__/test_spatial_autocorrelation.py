@@ -11,6 +11,7 @@ from isometric_calculation_library.geospatial.spatial_autocorrelation import (
     NeffResult,
     _build_inverse_distance_weights,  # pyright: ignore[reportPrivateUsage]
     _compute_morans_i,  # pyright: ignore[reportPrivateUsage]
+    build_spatial_autocorrelation_report,
     compute_morans_i_permutation_test,
     compute_neff_from_morans_i,
 )
@@ -265,3 +266,44 @@ def test_neff_takes_minimum_across_variables() -> None:
     autocorr_neff = result.per_variable["diff_autocorr"]["n_eff"]
     assert result.n_eff == autocorr_neff
     assert result.n_eff < result.n
+
+
+def test_build_spatial_autocorrelation_report_has_row_per_variable_plus_overall() -> None:
+    rng = np.random.default_rng(42)
+    paired = _make_paired_df(40, rng)
+    result = compute_neff_from_morans_i(
+        paired,
+        ["diff_ti", "diff_ca"],
+        n_permutations=199,
+        rng=rng,
+    )
+
+    report = build_spatial_autocorrelation_report(
+        neff_result=result,
+        variable_labels={"diff_ti": "Ti", "diff_ca": "Ca"},
+        n_permutations=199,
+    )
+
+    assert list(report["element"]) == ["Ti", "Ca", "overall"]
+    assert (report["n"] == result.n).all()
+    assert (report["n_permutations"] == 199).all()
+    assert (report["resample_size"] == result.n_eff_int).all()
+
+    overall = report[report["element"] == "overall"].iloc[0]
+    assert overall["n_eff"] == result.n_eff
+    assert bool(overall["significant"]) == any(mr.significant for mr in result.morans_results)
+
+
+def test_build_spatial_autocorrelation_report_falls_back_to_raw_variable_name() -> None:
+    rng = np.random.default_rng(0)
+    paired = _make_paired_df(30, rng)
+    result = compute_neff_from_morans_i(paired, ["diff_ti"], n_permutations=199, rng=rng)
+
+    # No label provided for diff_ti → reported under its raw column name.
+    report = build_spatial_autocorrelation_report(
+        neff_result=result,
+        variable_labels={},
+        n_permutations=199,
+    )
+
+    assert list(report["element"]) == ["diff_ti", "overall"]

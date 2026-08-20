@@ -13,7 +13,7 @@ the bootstrap should resample n_eff < n locations per replicate to account for
 reduced independent information content.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import TypedDict
 
@@ -278,3 +278,62 @@ def compute_neff_from_morans_i(
         per_variable=per_variable,
         morans_results=morans_results,
     )
+
+
+def build_spatial_autocorrelation_report(
+    *,
+    neff_result: NeffResult,
+    variable_labels: Mapping[str, str],
+    n_permutations: int,
+) -> pd.DataFrame:
+    """Tabulate a ``NeffResult`` as a per-variable report with an ``overall`` summary row.
+
+    One row per tested variable carries its Moran's I statistics and derived effective
+    sample size; a final ``overall`` row carries the minimum-across-variables ``n_eff``
+    that the bootstrap actually resamples with.
+
+    ``n_eff_int`` and ``resample_size`` are the same on each row in order to support the
+    existing report shape. They represent the results for the most autocorrelated variable,
+    rather than the per-variable rounded result.
+
+    Args:
+        neff_result: Result from ``compute_neff_from_morans_i``.
+        variable_labels: Maps each tested variable's column name to the label to report it
+            under (e.g. ``{"diff_mass_fraction_cu": "Cu"}``). A variable with no entry is
+            reported under its raw column name.
+        n_permutations: Permutation count used for the test, recorded on every row.
+    """
+    rows = list[dict[str, object]]()
+    for morans in neff_result.morans_results:
+        details = neff_result.per_variable[morans.variable]
+        rows.append({
+            "element": variable_labels.get(morans.variable, morans.variable),
+            "n": neff_result.n,
+            "I_obs": morans.observed_i,
+            "I_expected": morans.expected_i,
+            "std_I": morans.std_i,
+            "z_score": morans.z_score,
+            "p_adj": morans.p_value,
+            "significant": morans.significant,
+            "d_eff": details["d_eff"],
+            "n_eff": details["n_eff"],
+            "n_eff_int": neff_result.n_eff_int,
+            "n_permutations": n_permutations,
+            "resample_size": neff_result.n_eff_int,
+        })
+    rows.append({
+        "element": "overall",
+        "n": neff_result.n,
+        "I_obs": None,
+        "I_expected": None,
+        "std_I": None,
+        "z_score": None,
+        "p_adj": None,
+        "significant": any(morans.significant for morans in neff_result.morans_results),
+        "d_eff": neff_result.n / neff_result.n_eff,
+        "n_eff": neff_result.n_eff,
+        "n_eff_int": neff_result.n_eff_int,
+        "n_permutations": n_permutations,
+        "resample_size": neff_result.n_eff_int,
+    })
+    return pd.DataFrame(rows)

@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.45.0](https://github.com/isometric/calculation-library/releases/tag/v0.45.0)
+
+### Added
+
+- `geospatial.spatial_autocorrelation`: `build_spatial_autocorrelation_report` - tabulates a `NeffResult` as a per-variable report DataFrame with an `overall` summary row (the minimum-across-variables `n_eff` the bootstrap resamples with). Takes a `variable_labels` mapping so each tested difference column is reported under a caller-chosen element label, falling back to the raw column name. Extracts the row-building previously duplicated inline across EW tracer models
+
 ## [0.44.0](https://github.com/isometric/calculation-library/releases/tag/v0.44.0)
 
 ### Added
