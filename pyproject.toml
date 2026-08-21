@@ -6,7 +6,7 @@ requires = ["uv_build"]
 dev = [
   "gitpython==3.1.57",
   "markdown-it-py==4.2.0",
-  "molmass==2026.6.9",
+  "molmass==2026.8.15",
   "more-itertools==11.1.0",
   "pandas-stubs==3.0.5.260730",
   "pytest==9.1.1",
@@ -35,7 +35,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.46.1"
+version = "0.46.2"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
