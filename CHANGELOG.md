@@ -2,6 +2,48 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.48.6](https://github.com/isometric/calculation-library/releases/tag/v0.48.6)
+
+Dependency version update.
+
+## [0.48.5](https://github.com/isometric/calculation-library/releases/tag/v0.48.5)
+
+Dependency version update.
+
+## [0.48.4](https://github.com/isometric/calculation-library/releases/tag/v0.48.4)
+
+Dependency version update.
+
+## [0.48.3](https://github.com/isometric/calculation-library/releases/tag/v0.48.3)
+
+Dependency version update.
+
+## [0.48.2](https://github.com/isometric/calculation-library/releases/tag/v0.48.2)
+
+Dependency version update.
+
+## [0.48.1](https://github.com/isometric/calculation-library/releases/tag/v0.48.1)
+
+Dependency version update.
+
+## [0.48.0](https://github.com/isometric/calculation-library/releases/tag/v0.48.0)
+
+### Added
+
+- `enhanced_weathering.utils.conversions`: `convert_to_equivalent_soil_mass` - restates a mass fraction on the soil mass of a different sampling event, `C * (rho_measured / rho_reference)`. A soil sample is taken to a fixed depth and so covers a fixed volume, but a mass fraction is per kilogram: when bulk density differs between two events, each event's kilogram represents a different depth of profile and their mass fractions are not directly comparable. Protocol v1.2 requires bulk density every reporting period, so a model with a measured density per event can now put both on a common basis rather than pooling them. Matters more than the density change suggests, because an immobile-tracer difference `T_rp - T_bl` is a small difference of large numbers - a ~2.4% density change is a ~5.5% change in the difference the mass balance inverts. Both densities accept bootstrap replicates
+- `enhanced_weathering.utils.conversions`: `compute_residual_equivalent_soil_mass_ratio` - the per-replicate factor to apply on top of values already corrected at the two events' mean densities, `(rho_m_boot / rho_r_boot) / (mean(rho_m) / mean(rho_r))`. Applying the point correction once to the per-sample values lets every consumer working from measured values (spatial autocorrelation, power analysis, significance testing) see the same corrected difference; multiplying bootstrap replicates by this residual then swaps the fixed correction for a resampled one without applying the conversion twice. Its mean ratio is 1, so it reintroduces the correction's sampling error without shifting the central estimate - which is what a density difference within sampling error warrants
+
+### Changed
+
+- `enhanced_weathering.utils.spatial`: `assign_area_type`, `assign_and_split_by_plot_type` and `calculate_area_hectares_by_plot_type` take plots under the site field names `plot_type` and `geometry`. Plot boundaries come from `ENHANCED_WEATHERING_FIELD` sites now, so that is the one supported spelling and a model no longer renames columns before every call. `Type`/`Geometry` still resolve but raise a `DeprecationWarning` against the calling model: they are the column names inside the GeoJSON files the pre-site models were given, so those models cannot be moved off them by editing code alone - the uploaded files have to be reissued, and breaking them meanwhile would make an already-issued quantification unreproducible. The fallback goes once no model depends on it. A frame missing the plot type or geometry entirely raises naming what it looked for. `resolve_plot_columns`, `PLOT_TYPE_COLUMN` and `GEOMETRY_COLUMN` are exported for callers needing the same resolution
+- `enhanced_weathering.utils.control_correction`: `floor_at_zero` is now a required argument on `apply_control_correction_delta_paired` and `apply_control_correction_delta_unpaired`, in place of defaulting to `True`. Flooring keeps the control correction's downside while discarding its upside, which biases CDR upward, so which behaviour applies is a modelling decision that should be visible at the call site rather than inherited silently. Existing callers that relied on the default now pass `floor_at_zero=True` explicitly and are unchanged
+
+## [0.47.0](https://github.com/isometric/calculation-library/releases/tag/v0.47.0)
+
+### Changed
+
+- `biosphere.allometric_equations.wood_density`: adds nine supported tree types the table did not cover - `Anacardium occidentale`, `Bauhinia ungulata`, `Brosimum guianense`, `Byrsonima chrysophylla`, `Byrsonima densa`, `Casearia grandiflora`, `Heisteria ovata`, `Myrcia eximia` and `Pradosia lactescens`. Each value is a genus mean, carrying the genus-level standard deviation the table already uses for a genus-derived record
+
 ## [0.46.2](https://github.com/isometric/calculation-library/releases/tag/v0.46.2)
 
 Dependency version update.

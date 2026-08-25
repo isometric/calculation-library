@@ -10,6 +10,7 @@ Alibertia edulis,0.76,0.070823262
 Allantoma lineata,0.545,0.070823262
 Amaioua guianensis,0.625,0.070823262
 Amphiodon effusus,0.702416609,0.123401724
+Anacardium occidentale,0.454380952,0.09413391
 Anadenanthera colubrina,0.866142857,0.070823262
 Andira inermis,0.64325,0.070823262
 Andira surinamensis,0.70475,0.070823262
@@ -31,14 +32,18 @@ Astronium graveolens,0.867692308,0.070823262
 Attalea maripa,0.326,0.09413391
 Banara guianensis,0.61,0.070823262
 Bauhinia longipedicellata,0.755333333,0.09413391
+Bauhinia ungulata,0.755333333,0.09413391
 Bellucia grossularioides,0.5975,0.070823262
 Bertholletia excelsa,0.638,0.070823262
 Bixa orellana,0.36,0.070823262
+Brosimum guianense,0.668357908,0.09413391
 Brosimum potabile,0.5425,0.070823262
 Buchenavia congesta,0.745398148,0.09413391
+Byrsonima chrysophylla,0.648677083,0.09413391
 Byrsonima coccolobifolia,0.62,0.070823262
 Byrsonima crassifolia,0.584,0.070823262
 Byrsonima crispa,0.58,0.070823262
+Byrsonima densa,0.648677083,0.09413391
 Calophyllum brasiliense,0.589066667,0.070823262
 Caraipa densifolia,0.6406,0.070823262
 Caraipa punctulata,0.6,0.070823262
@@ -47,6 +52,7 @@ Carapa procera,0.5638125,0.070823262
 Carica papaya,0.1875,0.09413391
 Caryocar villosum,0.758,0.070823262
 Casearia arborea,0.573666667,0.070823262
+Casearia grandiflora,0.624615385,0.09413391
 Casearia javitensis,0.753,0.070823262
 Cassia fastuosa,0.805,0.070823262
 Cassia grandis,0.735827778,0.09413391
@@ -132,6 +138,7 @@ Handroanthus impetiginosus,0.565745691,0.123401724
 Handroanthus ochraceus,0.565745691,0.123401724
 Handroanthus serratifolius,0.565745691,0.123401724
 Hasseltia floribunda,0.53,0.070823262
+Heisteria ovata,0.69625,0.09413391
 Helicostylis tomentosa,0.614666667,0.070823262
 Henriettea succosa,0.69,0.09413391
 Hevea brasiliensis,0.466625,0.070823262
@@ -196,6 +203,7 @@ Minquartia guianensis,0.786714286,0.070823262
 Minquartia macrophylla,0.786714286,0.09413391
 Myrcia atramentifera,0.8155,0.09413391
 Myrcia cuprea,0.8155,0.09413391
+Myrcia eximia,0.8155,0.09413391
 Myrcia splendens,0.8,0.070823262
 Myrcia sylvatica,0.8155,0.09413391
 Myrsine umbellata,0.741037037,0.09413391
@@ -237,6 +245,7 @@ Pouteria filipes,0.964,0.070823262
 Pouteria macrophylla,0.737,0.070823262
 Pouteria pachyphylla,0.690657549,0.09413391
 Pouteria venosa,0.92,0.070823262
+Pradosia lactescens,0.723833333,0.09413391
 Protium heptaphyllum,0.6293,0.070823262
 Protium pallidum,0.56821129,0.09413391
 Protium subserratum,0.55,0.070823262

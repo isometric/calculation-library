@@ -76,6 +76,79 @@ def compute_feedstock_soil_mass_ratio(
     return rate / soil_mass_kg_ha
 
 
+def convert_to_equivalent_soil_mass(
+    *,
+    mass_fraction_mg_kg: Np1DArray[np.floating],
+    measured_bulk_density_kg_m3: float | Np1DArray[np.floating],
+    reference_bulk_density_kg_m3: float | Np1DArray[np.floating],
+) -> Np1DArray[np.floating]:
+    """Restate a mass fraction on the soil mass of a different sampling event.
+
+    A mass fraction is per kilogram of soil, but a soil sample is taken to a fixed depth and
+    so covers a fixed *volume*. When bulk density differs between two sampling events, each
+    event's kilogram represents a different depth of profile, and their mass fractions are not
+    directly comparable: an unchanged mass of an element per unit volume reports as a different
+    mg/kg purely because the mass of soil in the sampled volume moved.
+
+    Scaling by ``measured / reference`` puts the measured event onto the reference event's soil
+    mass. The reference is normally the baseline, that being the basis a feedstock-to-soil mass
+    balance is defined against. Both densities accept bootstrap replicates, so the correction
+    can carry its own sampling error rather than being applied as an exactly-known ratio.
+
+    This matters more than the size of the density change suggests, because an immobile-tracer
+    difference ``T_rp - T_bl`` is a small difference of large numbers: a density change of a
+    few percent is a much larger relative change in that difference, and flows straight into
+    the derived mixing ratio.
+
+    Feedstock composition is not a candidate for this conversion. It describes a material
+    rather than a field measurement over a sampled volume, so it has no soil mass basis.
+    """
+    return mass_fraction_mg_kg * (
+        np.asarray(measured_bulk_density_kg_m3, dtype=float)
+        / np.asarray(reference_bulk_density_kg_m3, dtype=float)
+    )
+
+
+def compute_residual_equivalent_soil_mass_ratio(
+    *,
+    measured_bulk_density_replicates_kg_m3: Np1DArray[np.floating],
+    reference_bulk_density_replicates_kg_m3: Np1DArray[np.floating],
+) -> Np1DArray[np.floating]:
+    """Per-replicate correction to apply on top of an already point-corrected mass fraction.
+
+    ``convert_to_equivalent_soil_mass`` is normally applied once to the per-sample values, at
+    the two events' mean densities, so that every consumer working from measured values -
+    spatial autocorrelation, power analysis, significance testing - sees the same corrected
+    difference. Bootstrap replicates drawn from those corrected values therefore already carry
+    the point correction.
+
+    Multiplying such replicates by this factor swaps that fixed correction for a resampled one,
+    without applying the conversion twice::
+
+        (rho_measured_boot / rho_reference_boot) / (mean(rho_measured) / mean(rho_reference))
+
+    Use it when the two events' densities are close enough that the difference between them is
+    within sampling error: treating the ratio as exactly known would then hand its full effect
+    to the result on evidence that does not support it.
+    """
+    measured = np.asarray(measured_bulk_density_replicates_kg_m3, dtype=float)
+    reference = np.asarray(reference_bulk_density_replicates_kg_m3, dtype=float)
+    if len(measured) != len(reference):
+        raise ValueError(
+            f"measured_bulk_density_replicates_kg_m3 has {len(measured)} replicates and "
+            f"reference_bulk_density_replicates_kg_m3 has {len(reference)}. Bootstrap both "
+            "over the same number of runs so each replicate pairs the two densities drawn "
+            "alongside each other.",
+        )
+    if len(measured) == 0:
+        raise ValueError(
+            "Bulk density replicate arrays are empty; the residual ratio is undefined without "
+            "a bootstrap to take the mean of.",
+        )
+    point_ratio = float(np.mean(measured)) / float(np.mean(reference))
+    return (measured / reference) / point_ratio
+
+
 def convert_mg_kg_to_kg_ha(
     *,
     soil_mass_fraction_mg_kg: Np1DArray[np.floating],

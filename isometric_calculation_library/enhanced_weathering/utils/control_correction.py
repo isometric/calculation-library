@@ -147,8 +147,8 @@ def apply_control_correction_delta_paired(
     elements: Sequence[ElementSymbol],
     rng: np.random.Generator,
     n_runs: int,
+    floor_at_zero: bool,
     alpha: float = 0.05,
-    floor_at_zero: bool = True,
 ) -> list[ControlCorrectionDeltaResult]:
     """Gate on significance then compute the full bootstrap cc distribution (paired design).
 
@@ -166,9 +166,10 @@ def apply_control_correction_delta_paired(
         elements: Elements to process (e.g. ``["Ca", "Mg"]``).
         rng: Random number generator for bootstrap resampling.
         n_runs: Number of bootstrap iterations.
+        floor_at_zero: If True, floor each bootstrap delta at 0, so a control that gained
+            cations contributes nothing and the correction only ever reduces CDR. If False,
+            the delta keeps its sign and a control gain increases CDR.
         alpha: Significance level.
-        floor_at_zero: If True, floor each bootstrap delta at 0 so the correction
-            only reduces CDR (no single run can inflate it).
     """
     significance_results = check_background_weathering_significance_paired(
         ctrl_paired=ctrl_paired,
@@ -229,8 +230,8 @@ def apply_control_correction_delta_unpaired(
     elements: Sequence[ElementSymbol],
     rng: np.random.Generator,
     n_runs: int,
+    floor_at_zero: bool,
     alpha: float = 0.05,
-    floor_at_zero: bool = True,
 ) -> list[ControlCorrectionDeltaResult]:
     """Gate on significance then bootstrap the additive control delta distribution (unpaired design).
 
@@ -249,9 +250,10 @@ def apply_control_correction_delta_unpaired(
         elements: Elements to process (e.g. ``["Ca", "Mg"]``).
         rng: Random number generator for bootstrap resampling.
         n_runs: Number of bootstrap iterations.
+        floor_at_zero: If True, floor each bootstrap delta at 0, so a control that gained
+            cations contributes nothing and the correction only ever reduces CDR. If False,
+            the delta keeps its sign and a control gain increases CDR.
         alpha: Significance level.
-        floor_at_zero: If True, floor each bootstrap delta at 0 so the correction
-            only reduces CDR (no single run can inflate it).
     """
     significance_results = check_background_weathering_significance_unpaired(
         control_reporting_period_samples=control_reporting_period_samples,

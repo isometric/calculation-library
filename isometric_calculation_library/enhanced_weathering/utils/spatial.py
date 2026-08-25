@@ -2,6 +2,7 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
+import warnings
 from collections.abc import Mapping, Sequence
 from typing import Literal, NamedTuple
 
@@ -10,6 +11,62 @@ import pandas as pd
 from shapely.geometry import Point
 
 PlotType = Literal["control", "treatment", "deployment"]
+
+PLOT_TYPE_COLUMN = "plot_type"
+"""Column a plots frame carries its plot type under."""
+
+GEOMETRY_COLUMN = "geometry"
+"""Column a plots frame carries its polygons under."""
+
+_DEPRECATED_PLOT_TYPE_COLUMN = "Type"
+_DEPRECATED_GEOMETRY_COLUMN = "Geometry"
+
+
+def resolve_plot_columns(
+    plots: gpd.GeoDataFrame,
+    *,
+    _extra_stack_depth: int = 0,
+) -> tuple[str, str]:
+    """Find which columns a plots frame carries its plot type and geometry under.
+
+    ``plot_type`` and ``geometry`` are the supported names: plot boundaries come from
+    ``ENHANCED_WEATHERING_FIELD`` sites, which supply those.
+
+    ``Type`` and ``Geometry`` are still read, but warn. They are the column names inside the
+    GeoJSON files the pre-site models were given, so those models cannot be moved off them by
+    editing code alone - the uploaded files have to be reissued. Until that happens, breaking
+    them would make an already-issued quantification unreproducible. The fallback goes once no
+    model depends on it.
+
+    Args:
+        plots: Plot polygons to inspect the columns of.
+        _extra_stack_depth: Frames between this call and the code a deprecation should be
+            reported against. Defaults to reporting against this function's own caller;
+            the helpers in this module pass 1, being an intermediate frame themselves.
+    """
+
+    def resolve(preferred: str, deprecated: str, what: str) -> str:
+        if preferred in plots.columns:
+            return preferred
+        if deprecated in plots.columns:
+            warnings.warn(
+                f"plots supplies its {what} as {deprecated!r}, which is deprecated. Site "
+                f"inputs supply {preferred!r}, which is what this function expects; "
+                f"{deprecated!r} is read for models still on pre-site GeoJSON inputs and "
+                "will stop being accepted.",
+                DeprecationWarning,
+                # resolve -> resolve_plot_columns -> the caller being reported against.
+                stacklevel=3 + _extra_stack_depth,
+            )
+            return deprecated
+        raise ValueError(
+            f"plots has no {what} column: expected {preferred!r}, found {sorted(plots.columns)}.",
+        )
+
+    return (
+        resolve(PLOT_TYPE_COLUMN, _DEPRECATED_PLOT_TYPE_COLUMN, "plot type"),
+        resolve(GEOMETRY_COLUMN, _DEPRECATED_GEOMETRY_COLUMN, "geometry"),
+    )
 
 
 class SplitByPlotTypeResult(NamedTuple):
@@ -34,9 +91,12 @@ def assign_area_type(
 
     Args:
         samples: DataFrame with latitude and longitude columns.
-        plots: GeoDataFrame with 'Type' and 'Geometry' columns.
+        plots: GeoDataFrame of plot polygons with ``plot_type`` and ``geometry`` columns.
+            ``Type``/``Geometry`` are still read but deprecated, see
+            ``resolve_plot_columns``.
         output_column: Name of the output column for the assigned type.
     """
+    type_column, geometry_column = resolve_plot_columns(plots, _extra_stack_depth=1)
     samples_gdf = gpd.GeoDataFrame(
         samples,
         geometry=[
@@ -46,8 +106,12 @@ def assign_area_type(
         crs="EPSG:4326",
     )
 
-    plots_for_join = plots[["Type", "Geometry"]].copy()
-    plots_for_join = plots_for_join.set_geometry("Geometry")
+    # Renamed rather than joined on as-is: an input already using "plot_type" would collide
+    # with the output column the join is about to write.
+    plots_for_join = plots[[type_column, geometry_column]].rename(
+        columns={type_column: "_plot_type", geometry_column: "_geometry"},
+    )
+    plots_for_join = gpd.GeoDataFrame(plots_for_join).set_geometry("_geometry")
 
     joined = gpd.sjoin(
         samples_gdf,
@@ -60,7 +124,7 @@ def assign_area_type(
     joined = joined[~joined.index.duplicated(keep="first")]
 
     samples = samples.copy()
-    samples[output_column] = joined["Type"].str.lower().to_numpy()
+    samples[output_column] = joined["_plot_type"].str.lower().to_numpy()
     return samples
 
 
@@ -80,8 +144,20 @@ def assign_and_split_by_plot_type(
             ``longitude`` columns.
         reporting_period_samples: End-of-reporting-period soil samples with
             the same columns.
-        plots: Plot geometries with ``Type`` and ``Geometry`` columns.
+        plots: Plot geometries with ``plot_type`` and ``geometry`` columns.
+            ``Type``/``Geometry`` are still read but deprecated, see
+            ``resolve_plot_columns``.
     """
+    # Resolved here rather than left to the two assign_area_type calls, so a deprecated
+    # spelling is reported once, against this function's caller, instead of twice from a frame
+    # deeper than any single stacklevel can point past.
+    type_column, geometry_column = resolve_plot_columns(plots, _extra_stack_depth=1)
+    plots = gpd.GeoDataFrame(
+        plots.rename(
+            columns={type_column: PLOT_TYPE_COLUMN, geometry_column: GEOMETRY_COLUMN},
+        ),
+    ).set_geometry(GEOMETRY_COLUMN)
+
     baseline_assigned = assign_area_type(baseline_samples, plots)
     reporting_period_assigned = assign_area_type(reporting_period_samples, plots)
 
@@ -117,24 +193,27 @@ def calculate_area_hectares_by_plot_type(
     Projects geographic coordinates to UTM before computing area.
 
     Args:
-        plots: GeoDataFrame with 'Type' and 'Geometry' columns.
+        plots: GeoDataFrame of plot polygons with ``plot_type`` and ``geometry`` columns.
+            ``Type``/``Geometry`` are still read but deprecated, see
+            ``resolve_plot_columns``.
         plot_types: Plot types to compute areas for.
     """
+    type_column, geometry_column = resolve_plot_columns(plots, _extra_stack_depth=1)
     plots_work = plots.copy()
-    plots_work = plots_work.set_geometry("Geometry")
+    plots_work = plots_work.set_geometry(geometry_column)
 
     if plots_work.crs is not None and plots_work.crs.is_geographic:
         plots_projected = plots_work.to_crs(plots_work.estimate_utm_crs())
     else:
         plots_projected = plots_work
 
-    type_values = plots_projected["Type"].str.lower()
+    type_values = plots_projected[type_column].str.lower()
 
     area_hectares = dict[PlotType, float]()
     for plot_type in plot_types:
         mask = type_values == plot_type
         if mask.any():
-            area_m2 = plots_projected.loc[mask, "Geometry"].area.sum()
+            area_m2 = plots_projected.loc[mask, geometry_column].area.sum()
             area_hectares[plot_type] = area_m2 / 10_000
 
     return area_hectares

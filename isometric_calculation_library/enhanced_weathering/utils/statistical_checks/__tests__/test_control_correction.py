@@ -235,6 +235,7 @@ def test_apply_control_correction_paired_not_significant_returns_zeros() -> None
         elements=["Ca"],
         rng=rng,
         n_runs=1_000,
+        floor_at_zero=True,
     )
 
     r = results[0]
@@ -257,6 +258,7 @@ def test_apply_control_correction_paired_significant_returns_distribution() -> N
         elements=["Ca"],
         rng=rng,
         n_runs=5_000,
+        floor_at_zero=True,
     )
 
     r = results[0]
@@ -269,7 +271,7 @@ def test_apply_control_correction_paired_significant_returns_distribution() -> N
 
 
 def test_apply_control_correction_paired_floor_at_zero() -> None:
-    """floor_at_zero=True (default) stops control enrichment from inflating CDR."""
+    """floor_at_zero=True stops control enrichment from inflating CDR."""
     rng = np.random.default_rng(42)
     n = 50
     ctrl_paired = pd.DataFrame({
@@ -352,6 +354,7 @@ def test_apply_control_correction_unpaired_not_significant_returns_zeros() -> No
         elements=["Ca"],
         rng=rng,
         n_runs=1_000,
+        floor_at_zero=True,
     )
 
     r = results[0]
@@ -373,6 +376,7 @@ def test_apply_control_correction_unpaired_significant_returns_distribution() ->
         elements=["Ca"],
         rng=rng,
         n_runs=5_000,
+        floor_at_zero=True,
     )
 
     r = results[0]

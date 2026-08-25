@@ -23,8 +23,11 @@ _CONTROL_POLY = Polygon([(0.02, 0), (0.02, 0.01), (0.03, 0.01), (0.03, 0)])
 
 def _make_plots() -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(
-        {"Type": ["Treatment", "Control"], "Geometry": [_TREATMENT_POLY, _CONTROL_POLY]},
-        geometry="Geometry",
+        {
+            "plot_type": ["Treatment", "Control"],
+            "geometry": [_TREATMENT_POLY, _CONTROL_POLY],
+        },
+        geometry="geometry",
         crs="EPSG:4326",
     )
 
@@ -378,8 +381,8 @@ def test_main_raises_when_no_treatment_plot() -> None:
     silently producing a credited CDR of zero from a missing treatment area."""
     baseline, rp, feedstock, bd, _ = _build_inputs()
     control_only_plots = gpd.GeoDataFrame(
-        {"Type": ["Control"], "Geometry": [_CONTROL_POLY]},
-        geometry="Geometry",
+        {"plot_type": ["Control"], "geometry": [_CONTROL_POLY]},
+        geometry="geometry",
         crs="EPSG:4326",
     )
 
@@ -399,8 +402,8 @@ def test_main_raises_when_no_control_plot() -> None:
     the missing-treatment case (the control correction needs control samples)."""
     baseline, rp, feedstock, bd, _ = _build_inputs()
     treatment_only_plots = gpd.GeoDataFrame(
-        {"Type": ["Treatment"], "Geometry": [_TREATMENT_POLY]},
-        geometry="Geometry",
+        {"plot_type": ["Treatment"], "geometry": [_TREATMENT_POLY]},
+        geometry="geometry",
         crs="EPSG:4326",
     )
 

@@ -149,6 +149,7 @@ def _compute_control_correction_deltas(
         elements=cations,
         rng=rng,
         n_runs=n_bootstrap_runs,
+        floor_at_zero=True,
     )
     control_correction_delta = dict[_Cation, Np1DArray[np.floating]]()
     for result in results:

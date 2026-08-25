@@ -4,42 +4,42 @@ requires = ["uv_build"]
 
 [dependency-groups]
 dev = [
-  "gitpython==3.1.57",
-  "markdown-it-py==4.2.0",
-  "molmass==2026.8.15",
-  "more-itertools==11.1.0",
-  "pandas-stubs==3.0.5.260730",
-  "pytest==9.1.1",
-  "ruff==0.15.21",
-  "scipy-stubs==1.18.0.1",
-  "toml-sort==0.24.4",
-  "tomlkit==0.15.1",
-  "typer==0.27.1",
+    "gitpython==3.1.59",
+    "markdown-it-py==4.2.0",
+    "molmass==2026.8.15",
+    "more-itertools==11.1.0",
+    "pandas-stubs==3.0.5.260730",
+    "pytest==9.1.1",
+    "ruff==0.15.21",
+    "scipy-stubs==1.18.1.0",
+    "toml-sort==0.24.4",
+    "tomlkit==0.15.1",
+    "typer==0.27.1",
 ]
 
 [project]
 dependencies = [
-  "geopandas==1.1.4",
-  "numpy==2.5.2",
-  "pandas==3.0.3",
-  "pyproj==3.7.2",
-  "rasterio==1.5.1",
-  "scikit-learn==1.9.0",
-  "scipy==1.18.0",
-  "shapely==2.1.2",
-  "statsmodels==0.14.6",
-  "xarray==2026.4.0",
+    "geopandas==1.1.4",
+    "numpy==2.5.2",
+    "pandas==3.0.5",
+    "pyproj==3.7.2",
+    "rasterio==1.5.1",
+    "scikit-learn==1.9.0",
+    "scipy==1.18.1",
+    "shapely==2.1.2",
+    "statsmodels==0.14.6",
+    "xarray==2026.7.0",
 ]
 license = "PolyForm-Noncommercial-1.0.0"
 license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.46.2"
+version = "0.48.6"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
-reportImportCycles = "error" # this makes it easier to inline hidden imports, by topologically sorting a DAG of modules
+reportImportCycles = "error"
 
 [tool.ruff]
 extend = "../../services/backend/base_configs/ruff.toml"
@@ -47,8 +47,8 @@ extend = "../../services/backend/base_configs/ruff.toml"
 [tool.ruff.lint]
 extend-select = ["CPY001"]
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
+[tool.ruff.lint.flake8-tidy-imports.banned-api.molmass]
+msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm Noncommercial 1\.0\.0\n# https://polyformproject\.org/licenses/noncommercial/1\.0\.0/\n'
@@ -64,14 +64,10 @@ spaces_indent_inline_array = 2
 trailing_comma_inline_array = true
 
 [tool.uv]
-exclude-newer = "3 days" # prevent installing packages uploaded in the last 3 days (supply chain protection)
+exclude-newer = "3 days"
 
 [tool.uv.build-backend]
 module-root = ""
-# (1) Keep this in sync with .github/paths/calculation-library-package-scope.env
-# (2) Exclude patterns are unanchored by default, so they need a leading "/" to
-# match only the project root; include patterns are already root-anchored,
-# so a leading "/" there breaks the match.
 source-exclude = ["/isometric_calculation_library/hidden"]
 source-include = ["CHANGELOG.md"]
 wheel-exclude = ["/isometric_calculation_library/hidden"]
