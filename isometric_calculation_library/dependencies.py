@@ -11,8 +11,8 @@ all its dependencies.
 """
 
 import geopandas
-import numpy  # noqa: ICN001
-import pandas  # noqa: ICN001
+import numpy  # ruff: ignore[unconventional-import-alias]
+import pandas  # ruff: ignore[unconventional-import-alias]
 import rasterio
 import scipy
 import shapely

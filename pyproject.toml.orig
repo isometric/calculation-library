@@ -36,7 +36,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.48.9"
+version = "0.48.10"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -46,7 +46,7 @@ reportImportCycles = "error" # this makes it easier to inline hidden imports, by
 extend = "../../services/backend/base_configs/ruff.toml"
 
 [tool.ruff.lint]
-extend-select = ["CPY001"]
+extend-select = ["missing-copyright-notice"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
@@ -55,7 +55,7 @@ extend-select = ["CPY001"]
 notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm Noncommercial 1\.0\.0\n# https://polyformproject\.org/licenses/noncommercial/1\.0\.0/\n'
 
 [tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["S101"]
+"**/test_*.py" = ["assert"]
 
 [tool.tomlsort]
 no_sort_tables = true
