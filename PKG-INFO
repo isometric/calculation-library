@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: isometric-calculation-library
-Version: 0.48.11
+Version: 0.48.12
 License-Expression: PolyForm-Noncommercial-1.0.0
 License-File: LICENSE
 Requires-Dist: affine==2.4.0

@@ -14,7 +14,7 @@ dev = [
   "scipy-stubs==1.18.1.0",
   "toml-sort==0.24.4",
   "tomlkit==0.15.1",
-  "typer==0.27.1",
+  "typer==0.27.2",
 ]
 
 [project]
@@ -36,7 +36,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.48.11"
+version = "0.48.12"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
