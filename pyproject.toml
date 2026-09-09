@@ -23,7 +23,7 @@ dependencies = [
     "geopandas==1.1.4",
     "numpy==2.5.2",
     "pandas==3.0.5",
-    "pyproj==3.7.2",
+    "pyproj==3.8.0",
     "rasterio==1.5.1",
     "scikit-learn==1.9.0",
     "scipy==1.18.1",
@@ -36,7 +36,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.49.0"
+version = "0.49.1"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
