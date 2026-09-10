@@ -116,7 +116,25 @@ class SpectralMatcher:
         target_resolution: float = 30.0,
         scaler: StandardScaler | None = None,
         n_neighbors: int = 10,
+        project_zone_all_touched: bool = False,
     ) -> None:
+        """Match project-boundary pixels to spectrally similar donor pixels.
+
+        Args:
+            project_boundary: Area whose pixels are matched.
+            donor_zone: Area the controls are drawn from. Its CRS sets the working CRS.
+            raster_paths: One path per band to match on, GDAL `vrt://` syntax included.
+            target_resolution: Master grid pixel size, in the working CRS's units.
+            scaler: Pre-fitted scaler. Fitted on the donor zone when not given.
+            n_neighbors: Donor pixels matched to each project pixel.
+            project_zone_all_touched: Whether a project pixel need only be touched by the
+                boundary, rather than have its centre inside it. Touching admits pixels
+                straddling the boundary, whose signal is part project and part
+                surroundings, which dilutes the project mean. The dilution grows with the
+                boundary's perimeter, so it bites hardest on small, fragmented project
+                areas. Callers that shrink the boundary by half a pixel diagonal to keep
+                pixels wholly inside want this False, or the shrink is undone.
+        """
         super().__init__()
         self.project_boundary = project_boundary
         self.donor_zone = donor_zone
@@ -135,6 +153,7 @@ class SpectralMatcher:
         self.target_resolution = target_resolution
         self.scaler = scaler
         self.n_neighbors = n_neighbors
+        self.project_zone_all_touched = project_zone_all_touched
         # True once the scaler is fit and safe to `transform()` with: immediately if a
         # pre-fitted scaler was provided, otherwise only after prepare_for_sklearn is
         # called with is_donor_zone=True.
@@ -369,7 +388,7 @@ class SpectralMatcher:
                 out_shape=(self.master_height, self.master_width),
                 transform=self.master_transform,
                 fill=0,
-                all_touched=True,
+                all_touched=self.project_zone_all_touched,
                 dtype=np.uint8,
             )
             if project_rasterized is None:

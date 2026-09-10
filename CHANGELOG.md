@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.50.0](https://github.com/isometric/calculation-library/releases/tag/v0.50.0)
+
+### Changed
+
+- `biosphere.reforestation_dynamic_baselining.spectral_matcher`: `SpectralMatcher` takes `project_zone_all_touched`, and defaults it to False, where the project zone was previously always rasterised with `all_touched=True`. Touching admitted every pixel the boundary clipped, including those straddling it, whose stocking-index change is part project and part surroundings and so dilutes the project mean towards the counterfactual it is compared against. The dilution scales with perimeter rather than area, so it bit hardest on small, fragmented project areas: on a 260 ha boundary of 40 separate fields it admitted 56% more pixels and moved mean project growth down 13%, from +0.1892 to +0.1647, leaving the control mean untouched. It also defeated the inward buffer callers apply before matching - buffering by half a pixel diagonal exists so a pixel whose centre is inside the buffered boundary lies wholly within the project area, and touching then re-admitted a one-pixel band around the eroded edge, discarding genuine interior pixels on the way. The donor zone mask and the raster clipping keep `all_touched=True`: the donor zone runs to tens of millions of pixels so an edge band is immaterial there, and clipping must not crop pixels the master grid then needs. Re-running an existing performance benchmark against this version will move the counterfactual fraction slightly, since the earlier notebooks do not pass the new argument
+
 ## [0.49.2](https://github.com/isometric/calculation-library/releases/tag/v0.49.2)
 
 Dependency version update.
