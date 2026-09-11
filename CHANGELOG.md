@@ -2,6 +2,13 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.51.0](https://github.com/isometric/calculation-library/releases/tag/v0.51.0)
+
+### Added
+
+- `hidden.biosphere.lidar.stats`: `canopy_height_median`, a new entry in `CanopyHeightStats` and `CanopyHeightArrayStats`. Every path that computes canopy height statistics now returns it alongside the existing ones, so a regression on biomass predicted from these statistics will pick it up as an available covariate without further plumbing
+- `hidden.biosphere.lidar.stats`: `segmented_percentiles`, which takes a sequence of percentiles and returns one row per percentile. `segmented_percentile` stays as a thin wrapper for callers needing one. Percentiles cannot use `np.add.reduceat` the way the companion statistics do, so each segment is sliced out individually; asking for several in one call selects over each segment once instead of once per percentile, which measures about a third quicker at the sizes this runs at. The three call sites that need both the median and the p99 use it
+
 ## [0.50.0](https://github.com/isometric/calculation-library/releases/tag/v0.50.0)
 
 ### Changed
