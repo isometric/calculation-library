@@ -491,9 +491,9 @@ class SpectralMatcher:
                 smaller_zone_pixel_index,
                 (self.master_height, self.master_width),
             )
-            smaller_zone_coordinates = self.master_transform * (
-                smaller_zone_col + 0.5,
-                smaller_zone_row + 0.5,
+            smaller_zone_coordinates = self.master_transform @ (
+                float(smaller_zone_col) + 0.5,
+                float(smaller_zone_row) + 0.5,
             )
 
             # Convert coordinates to target CRS if different from working CRS
@@ -508,9 +508,9 @@ class SpectralMatcher:
                     large_grid_pixel_flat_index,
                     (self.master_height, self.master_width),
                 )
-                donor_pixel_coordinates = self.master_transform * (
-                    large_grid_col + 0.5,
-                    large_grid_row + 0.5,
+                donor_pixel_coordinates = self.master_transform @ (
+                    float(large_grid_col) + 0.5,
+                    float(large_grid_row) + 0.5,
                 )
 
                 # Convert coordinates to target CRS if different from working CRS
