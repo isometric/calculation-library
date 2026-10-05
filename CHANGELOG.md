@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.52.0](https://github.com/isometric/calculation-library/releases/tag/v0.52.0)
+
+### Changed
+
+- `biosphere.allometric_equations.wood_density`: adds 22 tree species from the Turmalina Certification Round 2 inventory - `Aniba parviflora`, `Chamaecrista apoucouita`, `Couratari oblongifolia`, `Croton cajucara`, `Emmotum fagifolium`, `Hymenopus heteromorphus`, `Jupunba trapezifolia`, `Maquira coriacea`, `Neea oppositifolia`, `Ocotea cujumary`, `Parinari campestris`, `Perebea mollis`, `Pourouma villosa`, `Sapium marginatum`, `Sarcaulus brasiliensis`, `Sickingia tinctoria`, `Tachigali paraensis`, `Talisia guianensis`, `Terminalia amazonia`, `Theobroma subincanum`, `Unonopsis guatterioides` and `Vochysia guianensis`. Values follow the same derivation as the existing rows: species-level means where available, otherwise genus means carrying the genus-level standard deviation
+
 ## [0.51.10](https://github.com/isometric/calculation-library/releases/tag/v0.51.10)
 
 Dependency version update.

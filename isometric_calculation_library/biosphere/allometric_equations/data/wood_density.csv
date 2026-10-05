@@ -14,6 +14,7 @@ Anacardium occidentale,0.454380952,0.09413391
 Anadenanthera colubrina,0.866142857,0.070823262
 Andira inermis,0.64325,0.070823262
 Andira surinamensis,0.70475,0.070823262
+Aniba parviflora,0.54,0.070823262
 Annona exsucca,0.518777778,0.09413391
 Annona glabra,0.5,0.070823262
 Annona montana,0.518777778,0.09413391
@@ -69,6 +70,7 @@ Ceiba pentandra,0.305212121,0.070823262
 Ceiba samauma,0.57,0.070823262
 Ceiba speciosa,0.392,0.070823262
 Cenostigma tocantinum,0.84,0.070823262
+Chamaecrista apoucouita,0.9235,0.070823262
 Chamaecrista bahiae,0.9035,0.09413391
 Chimarrhis turbinata,0.72,0.070823262
 Chloroleucon tortum,0.667166667,0.09413391
@@ -84,8 +86,10 @@ Cordia nodosa,0.39,0.070823262
 Cordia scabrifolia,0.474,0.070823262
 Couratari guianensis,0.507125,0.070823262
 Couratari multiflora,0.448,0.070823262
+Couratari oblongifolia,0.505,0.070823262
 Couroupita subsessilis,0.39,0.070823262
 Coutarea hexandra,0.6,0.070823262
+Croton cajucara,0.510402667,0.09413391
 Croton matourensis,0.388333333,0.070823262
 Cupania diphylla,0.608357143,0.09413391
 Cupania scrobiculata,0.628,0.070823262
@@ -100,6 +104,7 @@ Dipteryx alata,0.9775,0.070823262
 Dipteryx odorata,0.92275,0.070823262
 Ecclinusa guianensis,0.627428571,0.070823262
 Ecclinusa ramiflora,0.961,0.070823262
+Emmotum fagifolium,0.7265,0.070823262
 Enterolobium contortisiliquum,0.397333333,0.070823262
 Enterolobium schomburgkii,0.698916667,0.070823262
 Enterolobium timbouva,0.531,0.070823262
@@ -147,6 +152,7 @@ Humiria balsamifera,0.730615385,0.070823262
 Hymenaea courbaril,0.79235,0.070823262
 Hymenaea intermedia,0.82,0.070823262
 Hymenaea parvifolia,0.8774,0.070823262
+Hymenopus heteromorphus,0.8164,0.070823262
 Inga alba,0.586111111,0.070823262
 Inga brachyrhachis,0.578086944,0.09413391
 Inga cayennensis,0.53,0.070823262
@@ -162,6 +168,7 @@ Inga stenoptera,0.578086944,0.09413391
 Inga thibaudiana,0.578086944,0.09413391
 Inga vera,0.575,0.070823262
 Jacaranda copaia,0.350666667,0.070823262
+Jupunba trapezifolia,0.5745,0.070823262
 Lacistema pubescens,0.51125,0.09413391
 Lacmellea aculeata,0.513125,0.09413391
 Laetia procera,0.6481,0.070823262
@@ -190,6 +197,7 @@ Mangifera indica,0.5525,0.070823262
 Manilkara huberi,0.921363636,0.070823262
 Manilkara subsericea,0.885127237,0.09413391
 Maprounea guianensis,0.588,0.070823262
+Maquira coriacea,0.5112,0.070823262
 Maquira guianensis,0.766,0.070823262
 Margaritaria nobilis,0.622333333,0.070823262
 Matayba arborescens,0.696666667,0.070823262
@@ -210,8 +218,10 @@ Myrsine umbellata,0.741037037,0.09413391
 Naucleopsis ternstroemiiflora,0.612,0.070823262
 Nectandra cuspidata,0.518,0.070823262
 Neea floribunda,0.62,0.070823262
+Neea oppositifolia,0.893,0.070823262
 Ochroma pyramidale,0.157571429,0.070823262
 Ocotea canaliculata,0.479333333,0.070823262
+Ocotea cujumary,0.539081638,0.09413391
 Ocotea glomerata,0.508,0.070823262
 Ocotea guianensis,0.529666667,0.070823262
 Oenocarpus bacaba,0.65,0.070823262
@@ -225,12 +235,14 @@ Ouratea discophora,0.791,0.070823262
 Ouratea racemiformis,0.742555556,0.09413391
 Pachira aquatica,0.376666667,0.070823262
 Palicourea guianensis,0.54,0.070823262
+Parinari campestris,0.7072,0.070823262
 Parkia gigantocarpa,0.26,0.070823262
 Parkia multijuga,0.399,0.070823262
 Parkia pendula,0.5212,0.070823262
 Peltogyne venosa,0.765,0.070823262
 Peltophorum dubium,0.7438,0.070823262
 Pentaclethra macroloba,0.603454545,0.070823262
+Perebea mollis,0.365,0.070823262
 Persea americana,0.548666667,0.070823262
 Piptadenia gonoacantha,0.715,0.070823262
 Platymiscium trinitatis,0.864,0.070823262
@@ -238,6 +250,7 @@ Poeppigia procera,0.735,0.070823262
 Posoqueria longiflora,0.455,0.070823262
 Pourouma guianensis,0.38,0.070823262
 Pourouma mollis,0.39,0.070823262
+Pourouma villosa,0.34,0.070823262
 Pouteria caimito,0.805,0.070823262
 Pouteria cladantha,0.942333333,0.070823262
 Pouteria decorticans,0.690657549,0.09413391
@@ -265,11 +278,14 @@ Samanea tubulosa,0.702416609,0.123401724
 Sapindus saponaria,0.71225,0.070823262
 Sapium argutum,0.417140625,0.09413391
 Sapium glandulosum,0.41525,0.070823262
+Sapium marginatum,0.419111111,0.070823262
 Sapium marmieri,0.41,0.070823262
+Sarcaulus brasiliensis,0.615,0.070823262
 Schizolobium amazonicum,0.58,0.070823262
 Senegalia polyphylla,0.702416609,0.123401724
 Senna alata,0.602857143,0.09413391
 Senna multijuga,0.582,0.070823262
+Sickingia tinctoria,0.8,0.070823262
 Simaba cedron,0.474333333,0.070823262
 Simarouba amara,0.383333333,0.070823262
 Siparuna guianensis,0.661833333,0.09413391
@@ -292,17 +308,21 @@ Tabebuia roseoalba,0.76232284,0.09413391
 Tabernaemontana angulata,0.526071429,0.09413391
 Tachigali glauca,0.576692308,0.09413391
 Tachigali myrmecophila,0.476,0.070823262
+Tachigali paraensis,0.688,0.070823262
 Tachigali vulgaris,0.576692308,0.09413391
 Talisia esculenta,0.91425,0.070823262
+Talisia guianensis,0.833068182,0.09413391
 Talisia longifolia,0.833068182,0.09413391
 Talisia veraluciana,0.833068182,0.09413391
 Tapirira guianensis,0.457,0.070823262
 Tectona grandis,0.601444444,0.070823262
+Terminalia amazonia,0.6735,0.070823262
 Terminalia congesta,0.630496778,0.09413391
 Terminalia corrugata,0.630496778,0.09413391
 Terminalia grandis,0.630496778,0.09413391
 Terminalia lucida,0.65,0.070823262
 Terminalia tetraphylla,0.630496778,0.09413391
+Theobroma subincanum,0.47,0.070823262
 Thyrsodium guianense,0.65,0.070823262
 Thyrsodium spruceanum,0.64,0.070823262
 Trattinnickia burserifolia,0.46,0.070823262
@@ -310,6 +330,7 @@ Trattinnickia rhoifolia,0.451142857,0.070823262
 Trema micrantha,0.319,0.070823262
 Triplaris americana,0.49,0.070823262
 Triplaris weigeltiana,0.4855,0.070823262
+Unonopsis guatterioides,0.52,0.070823262
 Vatairea erythrocarpa,0.672666667,0.09413391
 Vatairea guianensis,0.672,0.070823262
 Vatairea sericea,0.665,0.070823262
@@ -317,6 +338,7 @@ Virola michelii,0.470125,0.070823262
 Virola surinamensis,0.417909091,0.070823262
 Vismia guianensis,0.475,0.070823262
 Vismia sandwithii,0.493083333,0.09413391
+Vochysia guianensis,0.5087,0.070823262
 Vochysia inundata,0.485664744,0.09413391
 Xylopia aromatica,0.56125,0.070823262
 Xylopia cayennensis,0.591037654,0.09413391
