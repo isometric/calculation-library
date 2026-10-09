@@ -36,7 +36,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.52.2"
+version = "0.52.3"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
@@ -48,7 +48,7 @@ extend = "../../services/backend/base_configs/ruff.toml"
 [tool.ruff.lint]
 extend-select = ["missing-copyright-notice"]
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api.molmass]
+[tool.ruff.lint.flake8-tidy-imports.extend-banned-api.molmass]
 msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
 
 [tool.ruff.lint.flake8-copyright]
