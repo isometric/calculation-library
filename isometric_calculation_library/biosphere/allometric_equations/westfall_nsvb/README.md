@@ -50,7 +50,7 @@ Stand origin only enters for slash pine (SPCD 111) and loblolly pine (SPCD 131),
 
 ## Why the equations follow the paper and not `nsvb.R`
 
-NSVB ships a reference R implementation, `nsvb.R`, alongside the report. The two disagree on the parenthesisation of two model forms, and this package follows the paper in both cases. Both choices are pinned by tests in `tests/test_models.py`.
+NSVB ships a reference R implementation, `nsvb.R`, alongside the report. The two disagree on the parenthesisation of two model forms, and this package follows the paper in both cases. Both choices are pinned by tests in `__tests__/test_models.py`.
 
 **Eq 2, the segmented form.** Below the segmentation point `k` the paper's lower branch uses the exponent `b`; the script uses `b1`, the exponent of the upper branch. The upper branch carries a `k^(b − b1)` factor whose entire purpose is to make the two branches meet at `k` — with `b1` on both sides that factor introduces a step discontinuity at the segmentation point instead of removing one. For slash pine in natural stands the script's version jumps by a factor of 1.6 at the 9-inch segmentation point.
 
