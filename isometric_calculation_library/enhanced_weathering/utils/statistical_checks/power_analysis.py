@@ -8,17 +8,33 @@ Determines whether the sampling design has enough independent observations
 to detect the expected enrichment signal given observed variability and
 deployment-derived application rate.
 
+Which two sampling events to pass depends on the quantification method. The question is
+whether the feedstock application is detectable at the known rate:
+
+- For an immobile tracer, pass the baseline and end of reporting period samples. The tracer
+  concentrations should not change after application, so the end of the reporting period value
+  should still carry the full application signal.
+- For total cation accounting (TCA), pass the baseline and post-application samples. The
+  enrichment from baseline to post-application is the application itself.
+
+In both cases, the bulk density is the baseline soil density, because Eq. 22 adds the feedstock
+mass to the soil mass.
+
+The functions' ``reporting_period`` arguments, columns and result fields keep their original
+names. They hold whichever later event the method compares against: post-application for TCA,
+end of reporting period for an immobile tracer.
+
 When spatial autocorrelation is significant, n_eff is below the raw sample count and is
 what the pass condition uses, since correlated observations provide less independent
 information than their count suggests.
 
-Eq. 22 - Expected concentration change after rock application (shared by both variants
+Eq. 22 - Expected concentration change after feedstock application (shared by both variants
 below):
-    r = R / (BD * D * 10000)           # rock-to-soil mass ratio (kg rock / kg soil)
+    r = R / (BD * D * 10000)           # feedstock-to-soil mass ratio (kg feedstock / kg soil)
     delta = r * (C_F - C_BL) / (1 + r) # net enrichment (mg/kg)
 where R is application rate (kg/ha), BD bulk density (kg/m³), D sampling depth (m),
 C_F feedstock concentration (mg/kg), C_BL mean baseline soil concentration (mg/kg).
-The (1 + r) denominator accounts for soil mass dilution by the added rock.
+The (1 + r) denominator accounts for soil mass dilution by the added feedstock.
 
 Eq. 23 - Minimum samples required - differs between the two variants only in which
 variance term stands in for the sampling noise:
@@ -26,7 +42,7 @@ variance term stands in for the sampling noise:
 - ``compute_power_analysis_unpaired`` treats baseline and reporting-period as
   independent samples: ``sigma_bl^2 + sigma_rp^2 / k``, where ``k = n_rp / n_bl`` is the
   observed allocation ratio between the two events. (The protocol writes this ratio ``r``;
-  it is renamed here to keep it apart from Eq. 22's rock-to-soil mass ratio.) This is the
+  it is renamed here to keep it apart from Eq. 22's feedstock-to-soil mass ratio.) This is the
   right choice when the two samples cannot be matched by location. It takes the two
   sampling events as separate frames, which need not be the same size — the protocol
   allows a different number of samples per event, and the ``/ k`` term is what lets the
@@ -174,6 +190,8 @@ def compute_power_analysis_paired(
         paired: DataFrame with ``baseline_mass_fraction_<element>`` and
             ``reporting_period_mass_fraction_<element>`` columns (one row per matched
             location, e.g. from ``pair_locations``), with no null values in those columns.
+            The ``reporting_period_`` columns hold the later event: post-application for TCA,
+            end of reporting period for an immobile tracer (see the module docstring).
         feedstock_concentrations: Mean feedstock concentration per element (mg/kg).
             Keys should match elements (e.g. {"Ti": 17000, "Ca": 68000, "Mg": 29000}).
         effective_application_rate_kg_ha: Deployment-derived application rate. Pass a
@@ -183,7 +201,7 @@ def compute_power_analysis_paired(
             its 16th-84th percentile range carried alongside. A scalar is treated as a
             distribution of one, so scalar callers are unaffected.
         n_eff: Effective sample size from spatial autocorrelation test.
-        bulk_density_kg_m3: Soil bulk density for mass calculation. Like the rate, this may
+        bulk_density_kg_m3: Baseline soil bulk density for mass calculation. Like the rate, this may
             be a bootstrap distribution when several bulk densities were measured, in which
             case its spread widens the expected enrichment too; the two must then have equal
             length.
@@ -259,9 +277,10 @@ def compute_power_analysis_unpaired(
     Args:
         baseline_samples: Pre-application soil samples, with a
             ``mass_fraction_<element>`` column per requested element and no nulls in them.
-        reporting_period_samples: End-of-reporting-period soil samples, same columns. Need
-            not have the same number of rows as ``baseline_samples``, or describe the same
-            locations.
+        reporting_period_samples: Soil samples from the later event, same columns:
+            post-application for TCA, end of reporting period for an immobile tracer (see the
+            module docstring). Need not have the same number of rows as ``baseline_samples``,
+            or describe the same locations.
         feedstock_concentrations: Mean feedstock concentration per element (mg/kg).
             Keys should match elements (e.g. {"Ti": 17000, "Ca": 68000, "Mg": 29000}).
         effective_application_rate_kg_ha: Deployment-derived application rate. Pass a
@@ -271,7 +290,7 @@ def compute_power_analysis_unpaired(
             its 16th-84th percentile range carried alongside. A scalar is treated as a
             distribution of one, so scalar callers are unaffected.
         n_eff: Effective sample size from spatial autocorrelation test.
-        bulk_density_kg_m3: Soil bulk density for mass calculation. Like the rate, this may
+        bulk_density_kg_m3: Baseline soil bulk density for mass calculation. Like the rate, this may
             be a bootstrap distribution when several bulk densities were measured, in which
             case its spread widens the expected enrichment too; the two must then have equal
             length.

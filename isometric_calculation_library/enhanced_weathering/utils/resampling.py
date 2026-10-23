@@ -8,6 +8,11 @@ from typing import NamedTuple
 import numpy as np
 import pandas as pd
 
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.bulk_density_change import (
+    TCA_SAMPLING_EVENTS,
+    TcaSamplingEvent,
+    pool_bulk_density_by_group,
+)
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -51,6 +56,27 @@ def bootstrap_bulk_density_paired(
     (same value for baseline and end-of-reporting-period in each iteration).
     """
     return resample_mean(rng, bulk_density_values, n_runs)
+
+
+def bootstrap_grouped_bulk_density(
+    rng: np.random.Generator,
+    values_by_event: Mapping[TcaSamplingEvent, Np1DArray[np.floating]],
+    group_by_event: Mapping[TcaSamplingEvent, str],
+    n_runs: int,
+) -> Mapping[TcaSamplingEvent, Np1DArray[np.floating]]:
+    """Bootstrap mean bulk density per TCA sampling event, with one draw per density group.
+
+    Events in the same group get the same array, so their densities match in every replicate
+    and cancel out of a ratio of stocks. Groups are drawn in time order, so with every event in
+    one group the result is a single ``bootstrap_bulk_density_paired`` draw on all
+    measurements. ``group_by_event`` usually comes from ``resolve_bulk_density_groups``.
+    """
+    pooled = pool_bulk_density_by_group(values_by_event, group_by_event)
+    bootstrap_by_group = {
+        label: bootstrap_bulk_density_paired(rng, values, n_runs)
+        for label, values in pooled.items()
+    }
+    return {event: bootstrap_by_group[group_by_event[event]] for event in TCA_SAMPLING_EVENTS}
 
 
 def generate_bootstrap_location_indices(

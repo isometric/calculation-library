@@ -6,11 +6,16 @@ import numpy as np
 import pytest
 
 from isometric_calculation_library.enhanced_weathering.utils.resampling import (
+    bootstrap_bulk_density_paired,
+    bootstrap_grouped_bulk_density,
     compute_resampled_means_from_indices,
     generate_bootstrap_location_indices,
     resample_columns_together,
     resample_events_together,
     summarize_distributions,
+)
+from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.bulk_density_change import (
+    TcaSamplingEvent,
 )
 
 
@@ -296,3 +301,52 @@ def test_resample_columns_together_rejects_misaligned_columns() -> None:
             n_runs=10,
             event="feedstock samples",
         )
+
+
+def test_bootstrap_grouped_bulk_density_pooled_matches_a_single_draw() -> None:
+    """With every event in one group, all events share one draw on all measurements."""
+    values_by_event: dict[TcaSamplingEvent, np.ndarray] = {
+        "baseline": np.array([1_300.0, 1_310.0, 1_320.0]),
+        "post_application": np.array([1_330.0, 1_340.0]),
+        "reporting_period": np.array([1_350.0]),
+    }
+    pooled_label = "baseline+post_application+reporting_period"
+
+    densities = bootstrap_grouped_bulk_density(
+        np.random.default_rng(7),
+        values_by_event,
+        dict.fromkeys(values_by_event, pooled_label),
+        n_runs=1_000,
+    )
+
+    expected = bootstrap_bulk_density_paired(
+        np.random.default_rng(7),
+        np.array([1_300.0, 1_310.0, 1_320.0, 1_330.0, 1_340.0, 1_350.0]),
+        1_000,
+    )
+    assert densities["baseline"] is densities["post_application"]
+    assert densities["post_application"] is densities["reporting_period"]
+    np.testing.assert_array_equal(densities["baseline"], expected)
+
+
+def test_bootstrap_grouped_bulk_density_split_groups_draw_their_own_measurements() -> None:
+    densities = bootstrap_grouped_bulk_density(
+        np.random.default_rng(7),
+        {
+            "baseline": np.array([1_300.0, 1_310.0]),
+            "post_application": np.array([1_400.0, 1_410.0]),
+            "reporting_period": np.array([1_420.0]),
+        },
+        {
+            "baseline": "baseline",
+            "post_application": "post_application+reporting_period",
+            "reporting_period": "post_application+reporting_period",
+        },
+        n_runs=1_000,
+    )
+
+    assert densities["post_application"] is densities["reporting_period"]
+    assert float(densities["baseline"].min()) >= 1_300.0
+    assert float(densities["baseline"].max()) <= 1_310.0
+    assert float(densities["reporting_period"].min()) >= 1_400.0
+    assert float(densities["reporting_period"].max()) <= 1_420.0

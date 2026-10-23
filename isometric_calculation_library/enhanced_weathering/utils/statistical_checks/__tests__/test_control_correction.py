@@ -2,13 +2,17 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
+import re
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from isometric_calculation_library.enhanced_weathering.utils.cdr import compute_cation_stock_kg_ha
 from isometric_calculation_library.enhanced_weathering.utils.control_correction import (
     apply_control_correction_delta_paired,
     apply_control_correction_delta_unpaired,
+    apply_control_correction_stock_delta_paired,
     check_background_weathering_significance_paired,
     check_background_weathering_significance_unpaired,
 )
@@ -339,6 +343,93 @@ def test_apply_control_correction_paired_depletion_is_not_floored_away() -> None
 
 
 # -- apply_control_correction_delta_unpaired -----------------------------------
+
+
+def _depleted_control_pairs() -> pd.DataFrame:
+    rng = np.random.default_rng(42)
+    return pd.DataFrame({
+        "baseline_mass_fraction_ca": rng.normal(220, 5, 50),
+        "reporting_period_mass_fraction_ca": rng.normal(200, 5, 50),
+    })
+
+
+def test_apply_control_correction_stock_delta_paired_scales_the_concentration_delta() -> None:
+    """With one density shared by both events, the stock delta is the concentration delta
+    converted at that density."""
+    density = np.random.default_rng(3).normal(1_400, 20, size=2_000)
+
+    concentration = apply_control_correction_delta_paired(
+        ctrl_paired=_depleted_control_pairs(),
+        elements=["Ca"],
+        rng=np.random.default_rng(1),
+        n_runs=2_000,
+        floor_at_zero=False,
+    )[0]
+    stock = apply_control_correction_stock_delta_paired(
+        ctrl_paired=_depleted_control_pairs(),
+        elements=["Ca"],
+        rng=np.random.default_rng(1),
+        n_runs=2_000,
+        floor_at_zero=False,
+        baseline_bulk_density_kg_m3=density,
+        reporting_period_bulk_density_kg_m3=density,
+        depth_cm=15.0,
+    )[0]
+
+    np.testing.assert_allclose(
+        stock.cc_delta_distribution_kg_ha,
+        compute_cation_stock_kg_ha(concentration.cc_delta_distribution, density, 15.0),
+    )
+    assert stock.cc_delta_point_kg_ha == pytest.approx(
+        float(
+            compute_cation_stock_kg_ha(
+                np.array([concentration.cc_delta_point]),
+                np.array([density.mean()]),
+                15.0,
+            )[0],
+        ),
+    )
+
+
+def test_apply_control_correction_stock_delta_paired_uses_each_events_density() -> None:
+    """A denser reporting-period soil holds more cations at the same concentration, so the
+    stock delta shrinks below what one shared density would give."""
+    shared = np.full(2_000, 1_300.0)
+    denser = np.full(2_000, 1_400.0)
+
+    def _stock_delta(reporting_period_density: np.ndarray) -> float:
+        return apply_control_correction_stock_delta_paired(
+            ctrl_paired=_depleted_control_pairs(),
+            elements=["Ca"],
+            rng=np.random.default_rng(1),
+            n_runs=2_000,
+            floor_at_zero=False,
+            baseline_bulk_density_kg_m3=shared,
+            reporting_period_bulk_density_kg_m3=reporting_period_density,
+            depth_cm=15.0,
+        )[0].cc_delta_point_kg_ha
+
+    assert _stock_delta(denser) < _stock_delta(shared)
+
+
+def test_apply_control_correction_stock_delta_paired_needs_one_density_per_replicate() -> None:
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "reporting_period_bulk_density_kg_m3 has 10 values, but there are 2000 bootstrap "
+            "replicates. Pass one bulk density per replicate.",
+        ),
+    ):
+        apply_control_correction_stock_delta_paired(
+            ctrl_paired=_depleted_control_pairs(),
+            elements=["Ca"],
+            rng=np.random.default_rng(1),
+            n_runs=2_000,
+            floor_at_zero=False,
+            baseline_bulk_density_kg_m3=np.full(2_000, 1_300.0),
+            reporting_period_bulk_density_kg_m3=np.full(10, 1_300.0),
+            depth_cm=15.0,
+        )
 
 
 def test_apply_control_correction_unpaired_not_significant_returns_zeros() -> None:

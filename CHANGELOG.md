@@ -2,6 +2,20 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.53.0](https://github.com/isometric/calculation-library/releases/tag/v0.53.0)
+
+### Added
+
+- `enhanced_weathering.utils.statistical_checks.bulk_density_change`: `check_bulk_density_increase` - a one-tailed, unpaired test for a significant increase in bulk density from one sampling event to the next. Returns `not_testable` instead of raising when either event has fewer than three measurements
+- `enhanced_weathering.utils.statistical_checks.bulk_density_change`: `resolve_bulk_density_groups` - decides which of the baseline, post-application and end-of-reporting-period events share a bulk density, from the baseline to post-application and post-application to end-of-reporting-period tests. `not_testable` counts as no significant increase
+- `enhanced_weathering.utils.statistical_checks.bulk_density_change`: `pool_bulk_density_by_group` - gathers and sorts each density group's measurements
+- `enhanced_weathering.utils.resampling`: `bootstrap_grouped_bulk_density` - bootstraps mean bulk density per sampling event, with one draw per density group, so events in a group share their density in every replicate
+- `enhanced_weathering.utils.control_correction`: `apply_control_correction_stock_delta_paired` and `ControlCorrectionStockDeltaResult` - the paired control correction as a stock in kg/ha, converting each event's resampled mean with its own bulk density, for a weathered fraction calculated from stocks. Shares the significance gate and resampling with `apply_control_correction_delta_paired`, which is unchanged and remains the form for the immobile tracer method
+
+### Changed
+
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: the docstrings of `compute_power_analysis_paired`, `compute_power_analysis_unpaired` and the module now say which sampling events to pass: baseline and post-application for TCA, baseline and end of reporting period for an immobile tracer. The bulk density is the baseline soil density in both cases. Behaviour is unchanged
+
 ## [0.52.15](https://github.com/isometric/calculation-library/releases/tag/v0.52.15)
 
 Dependency version update.
