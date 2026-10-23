@@ -2,6 +2,8 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
+import re
+
 import numpy as np
 import pytest
 
@@ -12,6 +14,7 @@ from isometric_calculation_library.enhanced_weathering.utils.conversions import 
     convert_kg_ha_to_mg_kg,
     convert_mg_kg_to_kg_ha,
     convert_to_equivalent_soil_mass,
+    convert_wet_to_dry_mass_tonnes,
 )
 from isometric_calculation_library.utils.elements import atomic_weight
 
@@ -234,3 +237,39 @@ def test_residual_ratio_raises_on_empty_replicates() -> None:
             measured_bulk_density_replicates_kg_m3=np.array([]),
             reference_bulk_density_replicates_kg_m3=np.array([]),
         )
+
+
+def test_convert_wet_to_dry_mass_tonnes_uses_dry_basis_moisture() -> None:
+    """7.65% moisture on a dry basis means the wet mass is 1.0765 times the dry mass."""
+    assert convert_wet_to_dry_mass_tonnes(
+        wet_mass_tonnes=1_076.5,
+        moisture_percent_dry_basis=7.65,
+    ) == pytest.approx(1_000.0)
+
+
+def test_convert_wet_to_dry_mass_tonnes_without_moisture_is_unchanged() -> None:
+    assert convert_wet_to_dry_mass_tonnes(
+        wet_mass_tonnes=1_000.0,
+        moisture_percent_dry_basis=0.0,
+    ) == pytest.approx(1_000.0)
+
+
+def test_convert_wet_to_dry_mass_tonnes_takes_arrays() -> None:
+    np.testing.assert_allclose(
+        convert_wet_to_dry_mass_tonnes(
+            wet_mass_tonnes=np.array([1_076.5, 1_100.0]),
+            moisture_percent_dry_basis=np.array([7.65, 10.0]),
+        ),
+        [1_000.0, 1_000.0],
+    )
+
+
+def test_convert_wet_to_dry_mass_tonnes_rejects_negative_moisture() -> None:
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "moisture_percent_dry_basis must not be negative: it is the water as a percentage "
+            "of the dry mass.",
+        ),
+    ):
+        convert_wet_to_dry_mass_tonnes(wet_mass_tonnes=1_000.0, moisture_percent_dry_basis=-1.0)

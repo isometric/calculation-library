@@ -2,6 +2,8 @@
 # Licensed under PolyForm Noncommercial 1.0.0
 # https://polyformproject.org/licenses/noncommercial/1.0.0/
 
+import operator
+from functools import reduce
 from typing import NamedTuple
 
 import numpy as np
@@ -242,33 +244,77 @@ class WeatheredFractionResult(NamedTuple):
     weathered_fraction: Np1DArray[np.floating]
     """CDR as proportion of theoretical maximum CO2."""
 
-    theoretical_potential_tco2: float
-    """Maximum CO2 if all applied cations dissolved completely."""
+    theoretical_potential_tco2: float | Np1DArray[np.floating]
+    """Maximum CO2 if all applied cations dissolved completely.
+
+    A number when every feedstock concentration was a number, otherwise one value per replicate.
+    """
 
 
 def compute_weathered_fraction(
     *,
     cdr_tco2: Np1DArray[np.floating],
     feedstock_amount_kg_ha: float,
-    feedstock_ca_mg_kg: float,
-    feedstock_mg_mg_kg: float,
     area_hectares: float,
+    feedstock_ca_mg_kg: float | Np1DArray[np.floating] | None = None,
+    feedstock_mg_mg_kg: float | Np1DArray[np.floating] | None = None,
+    feedstock_na_mg_kg: float | Np1DArray[np.floating] | None = None,
 ) -> WeatheredFractionResult:
-    """Compute weathered fraction and theoretical potential CO2."""
-    ca_kg_ha = compute_feedstock_cation_kg_ha(feedstock_amount_kg_ha, feedstock_ca_mg_kg)
-    mg_kg_ha = compute_feedstock_cation_kg_ha(feedstock_amount_kg_ha, feedstock_mg_mg_kg)
-    pot_co2_kg_ha = float(
-        convert_cation_kg_to_co2_kg(cation_kg=np.array([ca_kg_ha]), cation="Ca")[0]
-        + convert_cation_kg_to_co2_kg(cation_kg=np.array([mg_kg_ha]), cation="Mg")[0],
+    """Compute weathered fraction and theoretical potential CO2.
+
+    The theoretical potential is the CO2 the applied feedstock would capture if all of the
+    cations passed dissolved. Pass the concentrations of exactly the cations whose CO2 is in
+    ``cdr_tco2``, meaning the credited ones: a cation left out of the CDR, for example because it
+    failed the power analysis, must be left out here too, and a credited cation must be passed,
+    or the weathered fraction is wrong.
+
+    Each feedstock concentration can be a number or a bootstrap array with one value per
+    replicate. Pass the arrays the CDR was calculated from, so numerator and denominator use
+    the same feedstock in each replicate.
+    """
+    concentrations_by_cation: tuple[tuple[Cation, float | Np1DArray[np.floating] | None], ...] = (
+        ("Ca", feedstock_ca_mg_kg),
+        ("Mg", feedstock_mg_mg_kg),
+        ("Na", feedstock_na_mg_kg),
     )
-    theoretical_potential_tco2 = (pot_co2_kg_ha * area_hectares) / 1000
-    if theoretical_potential_tco2 <= 0:
-        raise ValueError(
-            "theoretical_potential_tco2 must be positive to compute a weathered "
-            f"fraction, got {theoretical_potential_tco2}. This happens when "
-            "feedstock_amount_kg_ha, the feedstock cation concentrations, or "
-            "area_hectares is zero — check the feedstock and area inputs.",
+    potential_co2_kg_ha_by_cation = [
+        convert_cation_kg_to_co2_kg(
+            cation_kg=np.asarray(
+                compute_feedstock_cation_kg_ha(feedstock_amount_kg_ha, concentration),
+                dtype=float,
+            ),
+            cation=cation,
         )
+        for cation, concentration in concentrations_by_cation
+        if concentration is not None
+    ]
+    if len(potential_co2_kg_ha_by_cation) == 0:
+        raise ValueError(
+            "Pass the feedstock concentration of at least one credited cation (Ca, Mg or Na).",
+        )
+    potential_co2_kg_ha = reduce(operator.add, potential_co2_kg_ha_by_cation)
+    potential_tco2_array = np.asarray(potential_co2_kg_ha * area_hectares / 1000, dtype=float)
+
+    theoretical_potential_tco2: float | Np1DArray[np.floating]
+    if potential_tco2_array.ndim == 0:
+        theoretical_potential_tco2 = float(potential_tco2_array)
+        if theoretical_potential_tco2 <= 0:
+            raise ValueError(
+                "theoretical_potential_tco2 must be positive to compute a weathered "
+                f"fraction, got {theoretical_potential_tco2}. This happens when "
+                "feedstock_amount_kg_ha, the feedstock cation concentrations, or "
+                "area_hectares is zero — check the feedstock and area inputs.",
+            )
+    else:
+        theoretical_potential_tco2 = potential_tco2_array
+        n_non_positive = int(np.count_nonzero(~(potential_tco2_array > 0)))
+        if n_non_positive > 0:
+            raise ValueError(
+                "theoretical_potential_tco2 must be positive to compute a weathered "
+                f"fraction, but {n_non_positive} of {len(potential_tco2_array)} replicates are "
+                "not. This happens when feedstock_amount_kg_ha, the feedstock cation "
+                "concentrations, or area_hectares is zero — check the feedstock and area inputs.",
+            )
     return WeatheredFractionResult(
         weathered_fraction=cdr_tco2 / theoretical_potential_tco2,
         theoretical_potential_tco2=theoretical_potential_tco2,

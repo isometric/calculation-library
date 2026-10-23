@@ -182,3 +182,96 @@ def test_compute_weathered_fraction_raises_on_zero_potential() -> None:
             feedstock_mg_mg_kg=30_000.0,
             area_hectares=10.0,
         )
+
+
+# 10 t/ha of feedstock on 1 ha: 500 kg Ca, 300 kg Mg and 200 kg Na.
+_FEEDSTOCK = {
+    "feedstock_amount_kg_ha": 10_000.0,
+    "feedstock_ca_mg_kg": 50_000.0,
+    "feedstock_mg_mg_kg": 30_000.0,
+    "area_hectares": 1.0,
+}
+
+
+def test_compute_weathered_fraction_counts_ca_and_mg_by_default() -> None:
+    result = compute_weathered_fraction(cdr_tco2=np.array([1.0]), **_FEEDSTOCK)
+
+    assert result.theoretical_potential_tco2 == pytest.approx(2.184524999852125)
+    assert isinstance(result.theoretical_potential_tco2, float)
+
+
+def test_compute_weathered_fraction_adds_na_when_given() -> None:
+    result = compute_weathered_fraction(
+        cdr_tco2=np.array([1.0]),
+        feedstock_na_mg_kg=20_000.0,
+        **_FEEDSTOCK,
+    )
+
+    assert result.theoretical_potential_tco2 == pytest.approx(2.567387041345392)
+    np.testing.assert_allclose(result.weathered_fraction, [1.0 / 2.567387041345392])
+
+
+def test_compute_weathered_fraction_counts_only_the_cations_passed() -> None:
+    """A model crediting only Ca passes only Ca, and the potential covers Ca alone."""
+    calcium_only = compute_weathered_fraction(
+        cdr_tco2=np.array([1.0]),
+        feedstock_amount_kg_ha=10_000.0,
+        area_hectares=1.0,
+        feedstock_ca_mg_kg=50_000.0,
+    )
+    sodium_only = compute_weathered_fraction(
+        cdr_tco2=np.array([1.0]),
+        feedstock_amount_kg_ha=10_000.0,
+        area_hectares=1.0,
+        feedstock_na_mg_kg=20_000.0,
+    )
+
+    assert calcium_only.theoretical_potential_tco2 == pytest.approx(1.0980974599530913)
+    assert sodium_only.theoretical_potential_tco2 == pytest.approx(0.3828620414932672)
+
+
+def test_compute_weathered_fraction_needs_at_least_one_cation() -> None:
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Pass the feedstock concentration of at least one credited cation (Ca, Mg or Na).",
+        ),
+    ):
+        compute_weathered_fraction(
+            cdr_tco2=np.array([1.0]),
+            feedstock_amount_kg_ha=10_000.0,
+            area_hectares=1.0,
+        )
+
+
+def test_compute_weathered_fraction_takes_per_replicate_feedstock() -> None:
+    """Each replicate's potential uses that replicate's feedstock concentrations."""
+    result = compute_weathered_fraction(
+        cdr_tco2=np.array([1.0, 1.0]),
+        feedstock_amount_kg_ha=10_000.0,
+        feedstock_ca_mg_kg=np.array([50_000.0, 100_000.0]),
+        feedstock_mg_mg_kg=np.array([30_000.0, 60_000.0]),
+        feedstock_na_mg_kg=np.array([20_000.0, 40_000.0]),
+        area_hectares=1.0,
+    )
+
+    np.testing.assert_allclose(
+        result.theoretical_potential_tco2,
+        [2.567387041345392, 2 * 2.567387041345392],
+    )
+
+
+def test_compute_weathered_fraction_raises_on_a_zero_potential_replicate() -> None:
+    expected_message = (
+        "theoretical_potential_tco2 must be positive to compute a weathered fraction, but 1 "
+        "of 2 replicates are not. This happens when feedstock_amount_kg_ha, the feedstock "
+        "cation concentrations, or area_hectares is zero — check the feedstock and area inputs."
+    )
+    with pytest.raises(ValueError, match=re.escape(expected_message)):
+        compute_weathered_fraction(
+            cdr_tco2=np.array([1.0, 1.0]),
+            feedstock_amount_kg_ha=10_000.0,
+            feedstock_ca_mg_kg=np.array([50_000.0, 0.0]),
+            feedstock_mg_mg_kg=np.array([30_000.0, 0.0]),
+            area_hectares=1.0,
+        )

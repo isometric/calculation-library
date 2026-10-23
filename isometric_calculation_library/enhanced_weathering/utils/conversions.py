@@ -206,3 +206,28 @@ def convert_cation_kg_to_charge_equivalents(
     molar_mass_kg_per_mol = atomic_weight(cation) / 1000
     charge = _cation_to_charge(cation)
     return cation_kg / molar_mass_kg_per_mol * charge
+
+
+def convert_wet_to_dry_mass_tonnes(
+    *,
+    wet_mass_tonnes: float | Np1DArray[np.floating],
+    moisture_percent_dry_basis: float | Np1DArray[np.floating],
+) -> float | Np1DArray[np.floating]:
+    """Convert a wet feedstock mass to its dry mass, both in metric tonnes.
+
+    Moisture on a dry basis is the water as a percentage of the dry mass, so
+    wet = dry * (1 + moisture / 100). Moisture on a wet basis (water as a percentage of the wet
+    mass) needs a different formula, so don't pass it here. Convert masses in other units, such
+    as US short tons, to metric tonnes first.
+    """
+    wet = np.asarray(wet_mass_tonnes, dtype=float)
+    moisture = np.asarray(moisture_percent_dry_basis, dtype=float)
+    if not (np.all(np.isfinite(wet)) and np.all(np.isfinite(moisture))):
+        raise ValueError("Wet mass and moisture must be finite numbers.")
+    if np.any(moisture < 0):
+        raise ValueError(
+            "moisture_percent_dry_basis must not be negative: it is the water as a percentage "
+            "of the dry mass.",
+        )
+    dry = wet / (1.0 + moisture / 100.0)
+    return float(dry) if dry.ndim == 0 else dry

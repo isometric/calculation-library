@@ -2,6 +2,16 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.54.0](https://github.com/isometric/calculation-library/releases/tag/v0.54.0)
+
+### Added
+
+- `enhanced_weathering.utils.conversions`: `convert_wet_to_dry_mass_tonnes` - converts a wet feedstock mass to dry, both in metric tonnes, using moisture as a percentage of the dry mass
+
+### Changed
+
+- `enhanced_weathering.utils.cdr`: `compute_weathered_fraction` takes each cation's feedstock concentration (`feedstock_ca_mg_kg`, `feedstock_mg_mg_kg` and the new `feedstock_na_mg_kg`) as optional, and builds the theoretical potential from only the cations passed, which should be the credited ones. At least one is required. The concentrations can also be per-replicate bootstrap arrays, in which case `theoretical_potential_tco2` has one value per replicate. Calls passing Ca and Mg as numbers give the same result as before
+
 ## [0.53.0](https://github.com/isometric/calculation-library/releases/tag/v0.53.0)
 
 ### Added
