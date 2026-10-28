@@ -8,23 +8,23 @@ Source: Westfall JA, Coulston JW, Gray AN, Shaw JD, Radtke PJ, Walker DM, Weiski
 
 Two of NSVB's components are implemented, which together make total above-ground biomass:
 
-| Component | NSVB name | Coefficients | Fit statistics |
-| --- | --- | --- | --- |
-| Wood and bark, excluding foliage | `TT_WDBK_DW_ADJ` | Table S8 | Tables S12, S13 |
-| Foliage | `FOL_DW` | Table S9 | Tables S12, S13 |
-| Their sum, total AGB | `TT_DW_ADJ` | — | Tables S12, S13 |
+| Component                        | NSVB name        | Coefficients | Fit statistics  |
+| -------------------------------- | ---------------- | ------------ | --------------- |
+| Wood and bark, excluding foliage | `TT_WDBK_DW_ADJ` | Table S8     | Tables S12, S13 |
+| Foliage                          | `FOL_DW`         | Table S9     | Tables S12, S13 |
+| Their sum, total AGB             | `TT_DW_ADJ`      | —            | Tables S12, S13 |
 
 Out of scope: volume, bark and branch components taken separately, coarse roots, and the woodland junipers and pinyons (Jenkins group 10), which NSVB handles with a separate diameter-at-root-collar formulation. Asking for a woodland species raises `KeyError`.
 
 ## Layout
 
-| File | Contents |
-| --- | --- |
-| `models.py` | The five published model forms (Eqs 1–5) and the `NsvbComponentModel` / `NsvbModel` dataclasses that carry fitted coefficients |
+| File              | Contents                                                                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `models.py`       | The five published model forms (Eqs 1–5) and the `NsvbComponentModel` / `NsvbModel` dataclasses that carry fitted coefficients                                                 |
 | `coefficients.py` | Turns a species code into a fitted model, choosing between the coefficient sets NSVB publishes for it — `get_nsvb_model`, `published_divisions`, `create_nsvb_model_generator` |
-| `species.py` | FIA species reference lookup by code or binomial name — `get_species`, `find_species_code` |
-| `tables.py` | Cached reads of the packaged CSVs |
-| `data/` | The coefficient, fit-statistic and species tables, transcribed from the paper's supplementary material |
+| `species.py`      | FIA species reference lookup by code or binomial name — `get_species`, `find_species_code`                                                                                     |
+| `tables.py`       | Cached reads of the packaged CSVs                                                                                                                                              |
+| `data/`           | The coefficient, fit-statistic and species tables, transcribed from the paper's supplementary material                                                                         |
 
 ## Units
 
@@ -44,7 +44,7 @@ Stand origin only enters for slash pine (SPCD 111) and loblolly pine (SPCD 131),
 
 ## Uncertainty
 
-**Residual error** is the published `Sigma`. NSVB fits by weighted nonlinear least squares with `1/D²` weights, so residual variance is proportional to `D²` and `Sigma` is a residual standard deviation *per inch of diameter* — a tree of diameter `D` has residual SD `Sigma × D` pounds, not a constant `Sigma`. AGB uses the `TT_DW_ADJ` statistic for the summed component rather than combining the two parts, which would need an assumption about their correlation. A handful of species were fitted on a single felled tree and so have no residual degrees of freedom; NSVB publishes `Sigma` as infinite for those, and they fall back to the national `Sigma` rather than making every downstream standard error infinite.
+**Residual error** is the published `Sigma`. NSVB fits by weighted nonlinear least squares with `1/D²` weights, so residual variance is proportional to `D²` and `Sigma` is a residual standard deviation _per inch of diameter_ — a tree of diameter `D` has residual SD `Sigma × D` pounds, not a constant `Sigma`. AGB uses the `TT_DW_ADJ` statistic for the summed component rather than combining the two parts, which would need an assumption about their correlation. A handful of species were fitted on a single felled tree and so have no residual degrees of freedom; NSVB publishes `Sigma` as infinite for those, and they fall back to the national `Sigma` rather than making every downstream standard error infinite.
 
 **Parameter error** is carried by `create_nsvb_model_generator`, which resamples the alternative ecodivision coefficient sets NSVB publishes for the species. NSVB reports no coefficient standard errors or covariance, so there is no replicate table to draw from as there is for Chave et al. 2014. Validated against a case-resampling bootstrap refit of the Radtke et al. 2023 open felled-tree data, this proxy overstates the true parameter sampling spread by roughly 2.6× for wood and bark and 3.0× for foliage — regional allometric differences are real signal, not sampling noise, so the proxy errs wide. It also has nothing to resample for the many species with only a pooled fit, where the generator returns the same model every time. Residual error dominates either way: on a 30 cm / 20 m shortleaf pine, 12.1% CV from residuals against 1.4% from the generator.
 
@@ -74,7 +74,7 @@ species_code = find_species_code(
 
 ## Known gaps
 
-- The two sides of that join answer to different taxonomic authorities, so the misses are systematic rather than random. Species names in the backend are validated through GBIF, which returns the *accepted* binomial; FIA's reference carries its own, sometimes superseded. Chestnut oak is the live case — GBIF gives *Quercus montana*, FIA says *Quercus prinus*, and `find_species_code("Quercus montana")` raises rather than returning SPCD 832. Wiring NSVB to backend activity data needs a synonym table.
-- Ten binomials in the reference carry more than one species code, usually a species and a variety FIA still codes separately, so a name alone does not always identify a species. `find_species_code` raises on those rather than picking one, because the codes are not interchangeable: *Pinus elliottii* is both slash pine (111) and Honduras pine (144), 26% apart in wood specific gravity, and *Abies lasiocarpa* is both corkbark (18) and subalpine fir (19), 16% apart. Callers that hit one have to choose a code and pass it to `get_species` directly.
+- The two sides of that join answer to different taxonomic authorities, so the misses are systematic rather than random. Species names in the backend are validated through GBIF, which returns the _accepted_ binomial; FIA's reference carries its own, sometimes superseded. Chestnut oak is the live case — GBIF gives _Quercus montana_, FIA says _Quercus prinus_, and `find_species_code("Quercus montana")` raises rather than returning SPCD 832. Wiring NSVB to backend activity data needs a synonym table.
+- Ten binomials in the reference carry more than one species code, usually a species and a variety FIA still codes separately, so a name alone does not always identify a species. `find_species_code` raises on those rather than picking one, because the codes are not interchangeable: _Pinus elliottii_ is both slash pine (111) and Honduras pine (144), 26% apart in wood specific gravity, and _Abies lasiocarpa_ is both corkbark (18) and subalpine fir (19), 16% apart. Callers that hit one have to choose a code and pass it to `get_species` directly.
 - Only a handful of the tree types the backend currently defines are US species, because that vocabulary was built for Amazonian and southern-African projects: 9 of its 512 species-level qualifiers and 3 of its 160 genus-level ones resolve to an SPCD today. Nothing is wrong with the join; a US project would simply need its species added first.
-- The reference is FIA's, not a taxonomic authority: SPCD 813 is cherrybark oak (*Quercus pagoda*) and SPCD 830 is pin oak (*Q. palustris*), which are easy to transpose when mapping inventory codes.
+- The reference is FIA's, not a taxonomic authority: SPCD 813 is cherrybark oak (_Quercus pagoda_) and SPCD 830 is pin oak (_Q. palustris_), which are easy to transpose when mapping inventory codes.
