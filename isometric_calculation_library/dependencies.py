@@ -13,6 +13,7 @@ all its dependencies.
 import geopandas
 import numpy  # ruff: ignore[unconventional-import-alias]
 import pandas  # ruff: ignore[unconventional-import-alias]
+import pydantic
 import rasterio
 import scipy
 import shapely
@@ -24,6 +25,7 @@ __all__ = [
     "geopandas",
     "numpy",
     "pandas",
+    "pydantic",
     "rasterio",
     "scipy",
     "shapely",

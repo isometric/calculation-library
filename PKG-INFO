@@ -1,12 +1,13 @@
 Metadata-Version: 2.4
 Name: isometric-calculation-library
-Version: 0.54.2
+Version: 0.55.0
 License-Expression: PolyForm-Noncommercial-1.0.0
 License-File: LICENSE
 Requires-Dist: affine==3.0.1
 Requires-Dist: geopandas==1.2.0
 Requires-Dist: numpy==2.5.4
 Requires-Dist: pandas==3.0.6
+Requires-Dist: pydantic==2.14.1
 Requires-Dist: pyproj==3.8.0
 Requires-Dist: rasterio==1.5.2
 Requires-Dist: scikit-learn==1.9.1
