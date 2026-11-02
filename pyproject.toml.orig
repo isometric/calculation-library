@@ -8,7 +8,7 @@ dev = [
   "markdown-it-py==4.2.0",
   "molmass==2026.8.15",
   "more-itertools==11.2.1",
-  "pandas-stubs==3.0.5.260914",
+  "pandas-stubs==3.1.0.261029",
   "pytest==9.1.1",
   "ruff==0.17.3",
   "scipy-stubs==1.18.1.1",
@@ -37,7 +37,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.55.3"
+version = "0.55.4"
 
 [tool.pyright]
 extends = "../../services/backend/base_configs/pyrightconfig.json"
