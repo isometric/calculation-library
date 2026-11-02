@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.56.0](https://github.com/isometric/calculation-library/releases/tag/v0.56.0)
+
+### Changed
+
+- `utils.elements`: `atomic_weight` - updates the molar masses of 41 elements to match `molmass` 2026.10.31, which uses the CIAAW 2024 standard atomic weights
+
 ## [0.55.5](https://github.com/isometric/calculation-library/releases/tag/v0.55.5)
 
 Dependency version update.
