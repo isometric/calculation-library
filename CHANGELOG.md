@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.56.6](https://github.com/isometric/calculation-library/releases/tag/v0.56.6)
+
+### Fixed
+
+- `enhanced_weathering.utils.statistical_checks.power_analysis`: correct internal dictionary annotations for compatibility with Pyrefly; calculations and results are unchanged
+
 ## [0.56.5](https://github.com/isometric/calculation-library/releases/tag/v0.56.5)
 
 Dependency version update.

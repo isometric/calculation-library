@@ -217,7 +217,7 @@ def compute_power_analysis_paired(
             f"Power analysis requires at least 2 paired locations, got {len(paired)}. "
             "The standard deviation of the difference is otherwise undefined.",
         )
-    values_by_element = {
+    values_by_element: dict[str, _ElementValues] = {
         element: _ElementValues(
             baseline=paired[f"baseline_{mass_fraction_column_name(element)}"].to_numpy(dtype=float),
             reporting_period=paired[
@@ -297,7 +297,7 @@ def compute_power_analysis_unpaired(
         sampling_depth_cm: Depth of the sampling layer.
         elements: Elements to analyse (e.g. ["Ti", "Ca", "Mg", "Na", "K"]).
     """
-    values_by_element = {
+    values_by_element: dict[str, _ElementValues] = {
         element: _ElementValues(
             baseline=check_measured_values(
                 baseline_samples,
