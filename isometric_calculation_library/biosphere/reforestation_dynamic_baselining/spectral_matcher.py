@@ -173,8 +173,8 @@ class SpectralMatcher:
     def _determine_working_crs(self) -> CrsDetermination:
         """Determine appropriate working CRS for grid calculations."""
         target_crs = "EPSG:4326"
-        # original_crs is guaranteed non-None by __init__ validation so we're ignoring pyright here
-        if self.original_crs.is_geographic:  # pyright: ignore[reportOptionalMemberAccess]
+        # original_crs is guaranteed non-None by __init__ validation.
+        if self.original_crs.is_geographic:  # pyrefly: ignore[missing-attribute]
             logger.info(f"Geographic CRS detected: {self.original_crs}")
             # Get center point of donor zone to determine UTM zone
             center_point = self.donor_zone.geometry.union_all().centroid

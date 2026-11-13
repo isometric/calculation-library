@@ -41,7 +41,7 @@ def _make_plot(n: int = 3, area_m2: float = 1600.0) -> FieldPlot:
 def test_tree_measurements_is_frozen() -> None:
     trees = _make_trees()
     try:
-        trees.dbh_cm = np.array([1.0])  # pyright: ignore[reportAttributeAccessIssue]
+        trees.dbh_cm = np.array([1.0])  # pyrefly: ignore[read-only]
         raise AssertionError("Should be frozen")
     except AttributeError:
         pass

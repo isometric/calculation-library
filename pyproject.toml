@@ -37,11 +37,24 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.56.6"
+version = "0.56.7"
 
-[tool.pyright]
-extends = "../../services/backend/base_configs/pyrightconfig.json"
-reportImportCycles = "error"
+[tool.pyrefly]
+enabled-ignores = [
+    "type",
+    "pyrefly",
+]
+infer-with-first-use = false
+project-includes = ["."]
+python-interpreter-path = ".venv/bin/python"
+search-path = [
+    ".",
+    "isometric_calculation_library/hidden/scripts/version",
+]
+
+[tool.pyrefly.errors]
+missing-override-decorator = "error"
+missing-super-call = "error"
 
 [tool.ruff]
 extend = "../../services/backend/base_configs/ruff.toml"

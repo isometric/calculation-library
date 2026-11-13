@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.56.7](https://github.com/isometric/calculation-library/releases/tag/v0.56.7)
+
+### Changed
+
+- Use Pyrefly for type checking; calculations and runtime behavior are unchanged
+
 ## [0.56.6](https://github.com/isometric/calculation-library/releases/tag/v0.56.6)
 
 ### Fixed

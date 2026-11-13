@@ -9,8 +9,8 @@ import pytest
 from isometric_calculation_library.geospatial.spatial_autocorrelation import (
     MoransIResult,
     NeffResult,
-    _build_inverse_distance_weights,  # pyright: ignore[reportPrivateUsage]
-    _compute_morans_i,  # pyright: ignore[reportPrivateUsage]
+    _build_inverse_distance_weights,
+    _compute_morans_i,
     build_spatial_autocorrelation_report,
     compute_morans_i_permutation_test,
     compute_neff_from_morans_i,
