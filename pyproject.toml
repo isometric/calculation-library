@@ -14,7 +14,7 @@ dev = [
     "scipy-stubs==1.18.1.1",
     "toml-sort==0.25.0",
     "tomlkit==0.15.2",
-    "typer==0.28.0",
+    "typer==0.29.0",
 ]
 
 [project]
@@ -37,7 +37,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.56.7"
+version = "0.56.8"
 
 [tool.pyrefly]
 enabled-ignores = [
