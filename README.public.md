@@ -1,23 +1,3 @@
-Metadata-Version: 2.4
-Name: isometric-calculation-library
-Version: 0.56.11
-License-Expression: PolyForm-Noncommercial-1.0.0
-License-File: LICENSE
-Requires-Dist: affine==3.0.1
-Requires-Dist: geopandas==1.2.0
-Requires-Dist: numpy==2.5.4
-Requires-Dist: pandas==3.1.1
-Requires-Dist: pydantic==2.14.3
-Requires-Dist: pyproj==3.8.0
-Requires-Dist: rasterio==1.5.2
-Requires-Dist: scikit-learn==1.9.1
-Requires-Dist: scipy==1.18.1
-Requires-Dist: shapely==2.2.0
-Requires-Dist: statsmodels==0.15.0
-Requires-Dist: xarray==2026.9.0
-Requires-Python: >=3.13
-Description-Content-Type: text/markdown
-
 # Isometric Calculation Library
 
 Shared quantification functions used by [Isometric](https://isometric.com) to calculate carbon dioxide removal (CDR) from supplier data. The library powers the code calculations behind Isometric's verification reports, giving suppliers full transparency into how their removals are quantified.

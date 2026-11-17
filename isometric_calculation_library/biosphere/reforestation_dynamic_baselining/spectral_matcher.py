@@ -138,9 +138,10 @@ class SpectralMatcher:
         super().__init__()
         self.project_boundary = project_boundary
         self.donor_zone = donor_zone
-        self.original_crs = self.donor_zone.crs
-        if self.original_crs is None:
+        original_crs = self.donor_zone.crs
+        if original_crs is None:
             raise ValueError("Donor zone GeoDataFrame must have a valid CRS.")
+        self.original_crs: pyproj.CRS = original_crs
         project_boundary_reprojected = self.project_boundary.to_crs(self.original_crs)
         logger.info("Excluding project area from donor zone...")
         self.donor_zone = gpd.overlay(
@@ -173,8 +174,7 @@ class SpectralMatcher:
     def _determine_working_crs(self) -> CrsDetermination:
         """Determine appropriate working CRS for grid calculations."""
         target_crs = "EPSG:4326"
-        # original_crs is guaranteed non-None by __init__ validation.
-        if self.original_crs.is_geographic:  # pyrefly: ignore[missing-attribute]
+        if self.original_crs.is_geographic:
             logger.info(f"Geographic CRS detected: {self.original_crs}")
             # Get center point of donor zone to determine UTM zone
             center_point = self.donor_zone.geometry.union_all().centroid
