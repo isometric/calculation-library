@@ -131,9 +131,7 @@ def test_coverage_weights_counts_unique_locations() -> None:
         "feedstock_batch_id",
         "location_id",
     )
-    assert weights["batch_a"] == pytest.approx(4.0)
-    assert weights["batch_b"] == pytest.approx(2.0)
-    assert weights["batch_c"] == pytest.approx(1.0)
+    assert weights == {"batch_a": 4.0, "batch_b": 2.0, "batch_c": 1.0}
 
 
 def test_coverage_weights_all_batches_covered() -> None:
