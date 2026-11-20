@@ -11,8 +11,13 @@ from isometric_calculation_library.enhanced_weathering.utils.conversions import 
 )
 from isometric_calculation_library.utils.types import Np1DArray
 
-type ImmobileTracer = Literal["Zr", "Ti", "Cu"]
-"""Tracer elements accepted for the feedstock-soil mass balance."""
+type ImmobileTracer = Literal["Zr", "Ti", "Cu", "Ni"]
+"""Tracer elements accepted for the feedstock-soil mass balance.
+
+Whether an element is immobile enough to trace feedstock mass is a property of the
+feedstock and the soil it lands in, not of the element alone, so a model using one still
+has to show the tracer is resolvable and behaves conservatively on its own data.
+"""
 
 
 def compute_mass_ratio_from_immobile_tracer(

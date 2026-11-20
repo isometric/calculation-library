@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.57.0](https://github.com/isometric/calculation-library/releases/tag/v0.57.0)
+
+### Added
+
+- `enhanced_weathering.utils.tracer.ImmobileTracer`: accept `Ni`, so a model can run the feedstock-soil mass balance on nickel
+
 ## [0.56.14](https://github.com/isometric/calculation-library/releases/tag/v0.56.14)
 
 Dependency version update.
