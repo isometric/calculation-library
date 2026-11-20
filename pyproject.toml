@@ -37,7 +37,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.57.1"
+version = "0.57.2"
 
 [tool.pyrefly]
 enabled-ignores = ["type", "pyrefly"]
@@ -49,6 +49,17 @@ search-path = [".", "isometric_calculation_library/hidden/scripts/version"]
 [tool.pyrefly.errors]
 missing-override-decorator = "error"
 missing-super-call = "error"
+
+[tool.pytest]
+filterwarnings = [
+  "error",
+  # The significance tests run scipy's t-test, Shapiro-Wilk and Wilcoxon tests on synthetic
+  # samples whose differences are constant, which scipy warns about but still handles
+  "ignore:Precision loss occurred in moment calculation:RuntimeWarning:scipy.stats",
+  "ignore:invalid value encountered in scalar divide:RuntimeWarning:scipy.stats",
+]
+strict = true
+verbosity_assertions = 2
 
 [tool.ruff]
 extend = "../../services/backend/base_configs/ruff.toml"

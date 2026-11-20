@@ -35,9 +35,10 @@ def compute_mass_ratio_from_immobile_tracer(
     `compute_fraction_dissolved`. Note this only catches an exactly-zero
     denominator, not merely implausible (e.g. negative) finite ratios.
     """
-    mass_ratio = (soil_end_of_reporting_period_tracer_mg_kg - soil_baseline_tracer_mg_kg) / (
-        feedstock_tracer_mg_kg - soil_end_of_reporting_period_tracer_mg_kg
-    )
+    with np.errstate(divide="ignore"):
+        mass_ratio = (soil_end_of_reporting_period_tracer_mg_kg - soil_baseline_tracer_mg_kg) / (
+            feedstock_tracer_mg_kg - soil_end_of_reporting_period_tracer_mg_kg
+        )
     return np.where(np.isinf(mass_ratio), np.nan, mass_ratio)
 
 
@@ -79,14 +80,15 @@ def compute_fraction_dissolved(
 
     Infinite values (from m = 0 or C_feed = 0) are replaced with NaN.
     """
-    fraction_dissolved = ((1 + feedstock_soil_mass_ratio) / feedstock_soil_mass_ratio) * (
-        (
-            post_application_concentration_mg_kg * control_correction_ratio
-            - soil_end_of_reporting_period_mg_kg
-            - control_correction_delta_mg_kg
+    with np.errstate(divide="ignore"):
+        fraction_dissolved = ((1 + feedstock_soil_mass_ratio) / feedstock_soil_mass_ratio) * (
+            (
+                post_application_concentration_mg_kg * control_correction_ratio
+                - soil_end_of_reporting_period_mg_kg
+                - control_correction_delta_mg_kg
+            )
+            / feedstock_mg_kg
         )
-        / feedstock_mg_kg
-    )
 
     return np.where(np.isinf(fraction_dissolved), np.nan, fraction_dissolved)
 

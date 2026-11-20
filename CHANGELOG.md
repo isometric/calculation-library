@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.57.2](https://github.com/isometric/calculation-library/releases/tag/v0.57.2)
+
+### Changed
+
+- `enhanced_weathering.utils.tracer`: `compute_mass_ratio_from_immobile_tracer` and `compute_fraction_dissolved` no longer emit a divide-by-zero `RuntimeWarning` for the zero denominators they already turn into NaN
+
 ## [0.57.1](https://github.com/isometric/calculation-library/releases/tag/v0.57.1)
 
 Dependency version update.
