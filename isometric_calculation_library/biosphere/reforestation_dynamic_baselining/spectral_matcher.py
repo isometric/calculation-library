@@ -175,7 +175,7 @@ class SpectralMatcher:
         """Determine appropriate working CRS for grid calculations."""
         target_crs = "EPSG:4326"
         if self.original_crs.is_geographic:
-            logger.info(f"Geographic CRS detected: {self.original_crs}")
+            logger.info("Geographic CRS detected: %s", self.original_crs)
             # Get center point of donor zone to determine UTM zone
             center_point = self.donor_zone.geometry.union_all().centroid
             center_longitude = center_point.x
@@ -190,11 +190,14 @@ class SpectralMatcher:
             # EPSG codes: 326xx for northern hemisphere, 327xx for southern
             working_crs = f"EPSG:{32600 + utm_zone if hemisphere == 'north' else 32700 + utm_zone}"
             logger.info(
-                f"Using UTM zone {utm_zone}{hemisphere[0].upper()} ({working_crs}) for grid calculations",
+                "Using UTM zone %s%s (%s) for grid calculations",
+                utm_zone,
+                hemisphere[0].upper(),
+                working_crs,
             )
 
             return CrsDetermination(working_crs=working_crs, target_crs=target_crs)
-        logger.info(f"Projected CRS detected: {self.original_crs}")
+        logger.info("Projected CRS detected: %s", self.original_crs)
         return CrsDetermination(working_crs=str(self.original_crs), target_crs=target_crs)
 
     def setup_master_grid(self) -> MasterGrid:
@@ -221,7 +224,7 @@ class SpectralMatcher:
             self.target_resolution,
         )
 
-        logger.info(f"Master grid: {width}W x {height}H @ {self.target_resolution}m")
+        logger.info("Master grid: %sW x %sH @ %sm", width, height, self.target_resolution)
         return MasterGrid(transform=master_transform, width=width, height=height)
 
     def create_donor_zone_mask(self) -> np.ndarray:
@@ -289,7 +292,7 @@ class SpectralMatcher:
         raster_names = list[str]()
 
         for raster_path in self.raster_paths:
-            logger.info(f"Processing {raster_path}...")
+            logger.info("Processing %s...", raster_path)
             raster_names.append(Path(raster_path).name)
 
             large_grid_bands.append(self.process_raster_to_grid(raster_path, self.donor_zone))
@@ -300,8 +303,8 @@ class SpectralMatcher:
         large_grid_stack = np.stack(large_grid_bands)
         smaller_zone_stack = np.stack(smaller_zone_bands)
 
-        logger.info(f"Large grid stack shape: {large_grid_stack.shape}")
-        logger.info(f"Smaller zone stack shape: {smaller_zone_stack.shape}")
+        logger.info("Large grid stack shape: %s", large_grid_stack.shape)
+        logger.info("Smaller zone stack shape: %s", smaller_zone_stack.shape)
 
         return ProcessedRasterStacks(
             large_grid_stack=large_grid_stack,
@@ -321,17 +324,19 @@ class SpectralMatcher:
         is_nan_mask = np.isnan(invalid_data)
         num_bands = is_nan_mask.shape[1]
 
-        logger.info(f"    Contribution to invalid pixels by band (as % of {zone_name} pixels):")
+        logger.info("    Contribution to invalid pixels by band (as %% of %s pixels):", zone_name)
         nan_counts_per_band = is_nan_mask.sum(axis=0)
         for band_index, count in enumerate(nan_counts_per_band):
             if count > 0:
                 percentage = (count / total_zone_pixels) * 100
                 logger.info(
-                    f"      - Band {band_index} ({Path(self.raster_paths[band_index]).name}): "
-                    f"{percentage:.2f}%",
+                    "      - Band %s (%s): %.2f%%",
+                    band_index,
+                    Path(self.raster_paths[band_index]).name,
+                    percentage,
                 )
 
-        logger.info(f"    Exclusive NaN contributions by band (as % of {zone_name} pixels):")
+        logger.info("    Exclusive NaN contributions by band (as %% of %s pixels):", zone_name)
         nans_per_pixel = is_nan_mask.sum(axis=1)
         single_nan_pixels = is_nan_mask[nans_per_pixel == 1]
         if single_nan_pixels.shape[0] > 0:
@@ -340,8 +345,10 @@ class SpectralMatcher:
                 if count > 0:
                     percentage = (count / total_zone_pixels) * 100
                     logger.info(
-                        f"      - Band {band_index} ({Path(self.raster_paths[band_index]).name}) "
-                        f"is the sole NaN in {percentage:.2f}% of pixels.",
+                        "      - Band %s (%s) is the sole NaN in %.2f%% of pixels.",
+                        band_index,
+                        Path(self.raster_paths[band_index]).name,
+                        percentage,
                     )
         else:
             logger.info("      - No pixels with a single NaN band found.")
@@ -350,7 +357,8 @@ class SpectralMatcher:
         if all_nan_pixels_count > 0:
             percentage = (all_nan_pixels_count / total_zone_pixels) * 100
             logger.info(
-                f"    Found {percentage:.2f}% of pixels are NaN across all bands.",
+                "    Found %.2f%% of pixels are NaN across all bands.",
+                percentage,
             )
 
     def prepare_for_sklearn(
@@ -378,8 +386,9 @@ class SpectralMatcher:
             valid_mask &= donor_mask_flat
             new_valid_pixel_count = np.sum(valid_mask)
             logger.info(
-                f"  Filtered large grid from {original_valid_pixel_count} to "
-                f"{new_valid_pixel_count} pixels using donor zone mask.",
+                "  Filtered large grid from %s to %s pixels using donor zone mask.",
+                original_valid_pixel_count,
+                new_valid_pixel_count,
             )
         else:
             zone_name = "project zone"
@@ -401,8 +410,10 @@ class SpectralMatcher:
         # Consider only invalid pixels that are within the zone of interest
         invalid_indices_in_zone = np.where(~valid_mask & zone_mask)[0]
         logger.info(
-            f"  Found {len(invalid_indices_in_zone)} invalid pixels within the "
-            f"{zone_name} ({total_zone_pixels} total pixels).",
+            "  Found %s invalid pixels within the %s (%s total pixels).",
+            len(invalid_indices_in_zone),
+            zone_name,
+            total_zone_pixels,
         )
 
         if len(invalid_indices_in_zone) > 0 and total_zone_pixels > 0:
@@ -566,16 +577,18 @@ class SpectralMatcher:
             is_donor_zone=True,
         )
         logger.info("--- Scaler statistics ---")
-        logger.info(f"Means per band: {large_grid_prepared.scaler.mean_}")
-        logger.info(f"Variances per band: {large_grid_prepared.scaler.var_}")
+        logger.info("Means per band: %s", large_grid_prepared.scaler.mean_)
+        logger.info("Variances per band: %s", large_grid_prepared.scaler.var_)
 
         smaller_zone_prepared = self.prepare_for_sklearn(raster_stacks.smaller_zone_stack)
 
         logger.info(
-            f"Found {smaller_zone_prepared.normalized_data.shape[0]} valid pixels in smaller zone",
+            "Found %s valid pixels in smaller zone",
+            smaller_zone_prepared.normalized_data.shape[0],
         )
         logger.info(
-            f"Found {large_grid_prepared.normalized_data.shape[0]} valid pixels in large grid",
+            "Found %s valid pixels in large grid",
+            large_grid_prepared.normalized_data.shape[0],
         )
 
         nearest_neighbors_match = self.find_nearest_neighbors(

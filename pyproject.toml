@@ -37,7 +37,7 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.57.6"
+version = "0.57.7"
 
 [tool.pyrefly]
 infer-with-first-use = false
