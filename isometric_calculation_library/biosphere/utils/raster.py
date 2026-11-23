@@ -35,7 +35,9 @@ def sample_raster_vectorized(
         else:
             x_coordinates, y_coordinates = longitudes_flat, latitudes_flat
 
-        rows, columns = rowcol(source_dataset.transform, x_coordinates, y_coordinates)
+        # rasterio's stubs type `rowcol` for sequences of floats, but it accepts and returns arrays
+        row_indices, column_indices = rowcol(source_dataset.transform, x_coordinates, y_coordinates)  # pyrefly: ignore[bad-argument-type]
+        rows, columns = np.asarray(row_indices), np.asarray(column_indices)
 
         if source_dataset.width * source_dataset.height < MAX_IN_MEMORY_PIXELS:
             data = source_dataset.read(1)

@@ -2,6 +2,12 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.57.6](https://github.com/isometric/calculation-library/releases/tag/v0.57.6)
+
+### Changed
+
+- `hidden.biosphere.lidar.stats.determine_valid_geometries`: return the geometry type that it receives, so a caller that passes polygons gets polygons back
+
 ## [0.57.5](https://github.com/isometric/calculation-library/releases/tag/v0.57.5)
 
 Internal improvements only, no changes to public-facing functionality.
