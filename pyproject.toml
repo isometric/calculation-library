@@ -37,12 +37,10 @@ license-files = ["LICENSE"]
 name = "isometric-calculation-library"
 readme = "README.public.md"
 requires-python = ">=3.13"
-version = "0.57.4"
+version = "0.57.5"
 
 [tool.pyrefly]
-enabled-ignores = ["type", "pyrefly"]
 infer-with-first-use = false
-project-includes = ["."]
 python-interpreter-path = ".venv/bin/python"
 search-path = [".", "isometric_calculation_library/hidden/scripts/version"]
 
