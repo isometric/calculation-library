@@ -1,6 +1,6 @@
 [project]
 name = "isometric-calculation-library"
-version = "0.57.8"
+version = "0.57.9"
 readme = "README.public.md"
 requires-python = ">=3.13"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -10,7 +10,7 @@ dependencies = [
   "geopandas==1.2.0",
   "numpy==2.5.5",
   "pandas==3.1.1",
-  "pydantic==2.14.3",
+  "pydantic==2.14.4",
   "pyproj==3.8.0",
   "rasterio==1.5.2",
   "scikit-learn==1.9.1",
