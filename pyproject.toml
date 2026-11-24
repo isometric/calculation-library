@@ -1,23 +1,10 @@
-[build-system]
-build-backend = "uv_build"
-requires = ["uv_build"]
-
-[dependency-groups]
-dev = [
-  "gitpython==3.2.1",
-  "markdown-it-py==4.3.0",
-  "molmass==2026.11.1",
-  "more-itertools==11.2.1",
-  "pandas-stubs==3.1.0.261029",
-  "pytest==9.2.0",
-  "ruff==0.17.6",
-  "scipy-stubs==1.18.1.1",
-  "toml-sort==0.26.0",
-  "tomlkit==0.15.2",
-  "typer==0.29.2",
-]
-
 [project]
+name = "isometric-calculation-library"
+version = "0.57.8"
+readme = "README.public.md"
+requires-python = ">=3.13"
+license = "PolyForm-Noncommercial-1.0.0"
+license-files = ["LICENSE"]
 dependencies = [
   "affine==3.0.1",
   "geopandas==1.2.0",
@@ -32,12 +19,24 @@ dependencies = [
   "statsmodels==0.15.0",
   "xarray==2026.9.0",
 ]
-license = "PolyForm-Noncommercial-1.0.0"
-license-files = ["LICENSE"]
-name = "isometric-calculation-library"
-readme = "README.public.md"
-requires-python = ">=3.13"
-version = "0.57.7"
+
+[dependency-groups]
+dev = [
+  "gitpython==3.2.1",
+  "markdown-it-py==4.3.0",
+  "molmass==2026.11.1",
+  "more-itertools==11.2.1",
+  "pandas-stubs==3.1.0.261029",
+  "pytest==9.2.0",
+  "ruff==0.17.6",
+  "scipy-stubs==1.18.1.1",
+  "tomlkit==0.15.2",
+  "typer==0.29.2",
+]
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
 
 [tool.pyrefly]
 infer-with-first-use = false
@@ -65,21 +64,14 @@ extend = "../../services/backend/base_configs/ruff.toml"
 [tool.ruff.lint]
 extend-select = ["missing-copyright-notice"]
 
-[tool.ruff.lint.flake8-tidy-imports.extend-banned-api]
-"molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
-
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm Noncommercial 1\.0\.0\n# https://polyformproject\.org/licenses/noncommercial/1\.0\.0/\n'
 
+[tool.ruff.lint.flake8-tidy-imports.extend-banned-api]
+"molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
+
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["assert"]
-
-[tool.tomlsort]
-no_sort_tables = true
-sort_inline_tables = true
-sort_table_keys = true
-spaces_indent_inline_array = 2
-trailing_comma_inline_array = true
 
 [tool.uv]
 exclude-newer = "3 days" # prevent installing packages uploaded in the last 3 days (supply chain protection)
