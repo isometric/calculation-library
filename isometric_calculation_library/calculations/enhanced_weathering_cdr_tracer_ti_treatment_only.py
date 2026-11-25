@@ -54,6 +54,7 @@ from isometric_calculation_library.enhanced_weathering.utils.tracer import (
 from isometric_calculation_library.enhanced_weathering.utils.types import (
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 type _Cation = Literal["Ca", "Mg", "Na", "K"]
@@ -72,25 +73,25 @@ _TRACER: Literal["Ti"] = "Ti"
 class IntermediateOutputs(TypedDict):
     """Intermediate outputs from CDR quantification."""
 
-    data_cleaning_report: pd.DataFrame
+    data_cleaning_report: lazy_types.DataFrame
     """Samples dropped during spatial assignment (not inside any plot polygon)."""
 
-    distributions_summary: pd.DataFrame
+    distributions_summary: lazy_types.DataFrame
     """Summary statistics for each bootstrap distribution."""
 
-    area_hectares: pd.DataFrame
+    area_hectares: lazy_types.DataFrame
     """Area in hectares by plot type."""
 
-    pairing_report: pd.DataFrame
+    pairing_report: lazy_types.DataFrame
     """Pairing statistics per cation."""
 
-    application_rate_check: pd.DataFrame
+    application_rate_check: lazy_types.DataFrame
     """Comparison of tracer-derived vs actual feedstock application rate."""
 
-    tracer_resolvability: pd.DataFrame
+    tracer_resolvability: lazy_types.DataFrame
     """Tracer resolvability index for treatment plots."""
 
-    significance_test_results: pd.DataFrame
+    significance_test_results: lazy_types.DataFrame
     """Statistical significance test results per cation."""
 
 

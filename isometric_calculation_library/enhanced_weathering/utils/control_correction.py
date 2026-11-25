@@ -41,6 +41,7 @@ from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.
 from isometric_calculation_library.enhanced_weathering.utils.types import (
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.elements import ElementSymbol
 from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
@@ -131,7 +132,7 @@ class ControlCorrectionDeltaResult(NamedTuple):
     (delta = mean(C_baseline_ctrl) - mean(C_reporting_period_ctrl)).
     """
 
-    cc_delta_distribution: Np1DArray[np.floating]
+    cc_delta_distribution: lazy_types.NpFloating1DArray
     """Full bootstrap distribution of additive cc deltas (mg/kg). All 0.0 if not significant.
 
     Pass this to ``compute_fraction_dissolved`` as ``control_correction_delta_mg_kg``:
@@ -169,7 +170,7 @@ class ControlCorrectionStockDeltaResult(NamedTuple):
     Signed so that a positive delta means the control *lost* cations.
     """
 
-    cc_delta_distribution_kg_ha: Np1DArray[np.floating]
+    cc_delta_distribution_kg_ha: lazy_types.NpFloating1DArray
     """Bootstrap distribution of additive stock deltas (kg/ha). All 0.0 if not significant.
 
     Pass this to ``compute_weathered_fraction_standard_tca`` as ``cation_dissolved_kg_ha``,
@@ -193,10 +194,10 @@ class _ControlMeansPaired(NamedTuple):
     """One element's significance test, and its bootstrapped control means if significant."""
 
     significance: ControlPlotChangeSignificanceTest
-    baseline_boot_mg_kg: Np1DArray[np.floating] | None
+    baseline_boot_mg_kg: lazy_types.NpFloating1DArray | None
     """``None`` when the significance test did not pass."""
 
-    reporting_period_boot_mg_kg: Np1DArray[np.floating] | None
+    reporting_period_boot_mg_kg: lazy_types.NpFloating1DArray | None
 
 
 def _bootstrap_control_means_paired(

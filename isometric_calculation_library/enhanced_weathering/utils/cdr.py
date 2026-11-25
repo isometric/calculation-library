@@ -13,6 +13,7 @@ from isometric_calculation_library.enhanced_weathering.utils.conversions import 
     convert_cation_kg_to_co2_kg,
     convert_mg_kg_to_kg_ha,
 )
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -241,10 +242,10 @@ def compute_weathered_fraction_standard_tca(
 class WeatheredFractionResult(NamedTuple):
     """Result from compute_weathered_fraction."""
 
-    weathered_fraction: Np1DArray[np.floating]
+    weathered_fraction: lazy_types.NpFloating1DArray
     """CDR as proportion of theoretical maximum CO2."""
 
-    theoretical_potential_tco2: float | Np1DArray[np.floating]
+    theoretical_potential_tco2: float | lazy_types.NpFloating1DArray
     """Maximum CO2 if all applied cations dissolved completely.
 
     A number when every feedstock concentration was a number, otherwise one value per replicate.

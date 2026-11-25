@@ -12,6 +12,7 @@ from typing import NamedTuple, override
 import numpy as np
 import pandas as pd
 
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ class ProcessingReport:
 class SampleFilterResult(NamedTuple):
     """Result from zero_filter or null_filter."""
 
-    samples: pd.DataFrame
+    samples: lazy_types.DataFrame
     n_samples_flagged: int
     """Number of individual samples that triggered the filter condition."""
     n_samples_dropped: int
@@ -94,7 +95,7 @@ class SampleFilterResult(NamedTuple):
 class WinsoriseResult(NamedTuple):
     """Result from winsorise or iterative_sigma_clip."""
 
-    samples: pd.DataFrame
+    samples: lazy_types.DataFrame
     n_values_clipped: int
     """Number of individual values clipped."""
 

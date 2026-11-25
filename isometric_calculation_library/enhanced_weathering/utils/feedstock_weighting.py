@@ -17,6 +17,7 @@ from typing import NamedTuple
 import numpy as np
 import pandas as pd
 
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -98,9 +99,9 @@ def compute_plot_coverage_weights(
 class BootstrapWeightedFeedstockResult(NamedTuple):
     """Result from bootstrap_weighted_feedstock."""
 
-    point_estimate: pd.DataFrame
+    point_estimate: lazy_types.DataFrame
     """Single-row DataFrame with weighted mean composition (one value per column)."""
-    bootstrap_distributions: dict[str, Np1DArray[np.floating]]
+    bootstrap_distributions: dict[str, lazy_types.NpFloating1DArray]
     """Mapping from column name to bootstrap distribution array (n_runs,)."""
 
 

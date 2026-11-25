@@ -63,6 +63,7 @@ from isometric_calculation_library.enhanced_weathering.utils.tracer import (
 from isometric_calculation_library.enhanced_weathering.utils.types import (
     mass_fraction_column_name,
 )
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -74,7 +75,7 @@ class DerivedApplicationRate(NamedTuple):
     model's judgement to make explicitly.
     """
 
-    rate_distribution_kg_ha: Np1DArray[np.floating]
+    rate_distribution_kg_ha: lazy_types.NpFloating1DArray
     """Bootstrap distribution of the implied rate (kg/ha), with at least one finite replicate.
 
     Replicates whose mass balance is non-physical are NaN rather than dropped, so the array
@@ -141,10 +142,10 @@ def pool_cations_as_charge_equivalents(
 class _SamplingEvents(NamedTuple):
     """Bootstrapped mean of each sampling event, ready to feed a mass balance."""
 
-    baseline: Mapping[str, Np1DArray[np.floating]]
+    baseline: Mapping[str, lazy_types.NpFloating1DArray]
     """Baseline replicate means, keyed by mass fraction column."""
 
-    post_application: Mapping[str, Np1DArray[np.floating]]
+    post_application: Mapping[str, lazy_types.NpFloating1DArray]
     """Post-application replicate means, keyed by the same columns."""
 
     n_baseline: int

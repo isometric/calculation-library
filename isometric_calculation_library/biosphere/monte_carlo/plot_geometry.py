@@ -16,15 +16,17 @@ keeps polygons free of self-intersection and makes the realised distortion
 insensitive to how densely the outline is vertex-sampled.
 """
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum, auto
 
 import numpy as np
 import shapely
 
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
 
-DEFAULT_ANGULAR_CORRELATION_SCALE = np.pi / 4
+DEFAULT_ANGULAR_CORRELATION_SCALE = math.pi / 4
 """Angular correlation length (radians) of radial deformation.
 
 Controls how smoothly deformation varies around the plot outline. Smaller
@@ -74,16 +76,16 @@ class PlotDeformer:
     Construct via :func:`build_plot_deformer`.
     """
 
-    theta: Np1DArray[np.float64]
+    theta: lazy_types.NpFloat641DArray
     """Angle of each vertex about the plot centre (radians)."""
 
-    radius: Np1DArray[np.float64]
+    radius: lazy_types.NpFloat641DArray
     """Distance of each vertex from the plot centre (m)."""
 
-    centre: Np1DArray[np.float64]
+    centre: lazy_types.NpFloat641DArray
     """Plot centre as ``(x, y)`` in the polygon's projected CRS."""
 
-    deformation_factor: Np2DArray[np.float64] | None
+    deformation_factor: lazy_types.NpFloat642DArray | None
     """Lower-triangular Cholesky factor of the radial deformation covariance.
 
     ``None`` when the deformation standard error is zero, i.e. GPS offset only.

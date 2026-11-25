@@ -13,6 +13,7 @@ from isometric_calculation_library.enhanced_weathering.utils.statistical_checks.
     TcaSamplingEvent,
     pool_bulk_density_by_group,
 )
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -221,8 +222,8 @@ def resample_by_group(
 class SamplingEventMeans(NamedTuple):
     """Bootstrapped replicate means for two sampling events, keyed by value column."""
 
-    baseline: Mapping[str, Np1DArray[np.floating]]
-    reporting_period: Mapping[str, Np1DArray[np.floating]]
+    baseline: Mapping[str, lazy_types.NpFloating1DArray]
+    reporting_period: Mapping[str, lazy_types.NpFloating1DArray]
 
     def column(self, name: str) -> tuple[Np1DArray[np.floating], Np1DArray[np.floating]]:
         """Both events' replicate means for one column, baseline first.

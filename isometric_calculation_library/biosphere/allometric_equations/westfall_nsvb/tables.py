@@ -8,9 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from isometric_calculation_library.utils import lazy_types
+
 _DATA_DIR = Path(__file__).parent / "data"
 
-_cache = dict[str, pd.DataFrame]()
+_cache = dict[str, lazy_types.DataFrame]()
 
 
 def load_table(name: str) -> pd.DataFrame:

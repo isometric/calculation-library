@@ -1,6 +1,6 @@
 [project]
 name = "isometric-calculation-library"
-version = "0.57.9"
+version = "0.57.10"
 readme = "README.public.md"
 requires-python = ">=3.13"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -59,7 +59,7 @@ strict = true
 verbosity_assertions = 2
 
 [tool.ruff]
-extend = "../../services/backend/base_configs/ruff.toml"
+extend = "../../ruff.toml"
 
 [tool.ruff.lint]
 extend-select = ["missing-copyright-notice"]
@@ -69,9 +69,6 @@ notice-rgx = '# Copyright \(c\) 2026 Isometric HQ Ltd\n# Licensed under PolyForm
 
 [tool.ruff.lint.flake8-tidy-imports.extend-banned-api]
 "molmass".msg = "molmass is a test-only dependency. Element data is inlined in elements.py and tested against molmass."
-
-[tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["assert"]
 
 [tool.uv]
 exclude-newer = "3 days" # prevent installing packages uploaded in the last 3 days (supply chain protection)

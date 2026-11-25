@@ -9,11 +9,13 @@ from typing import NamedTuple
 
 import pandas as pd
 
+from isometric_calculation_library.utils import lazy_types
+
 
 class PairingResult(NamedTuple):
     """Result of pairing baseline and reporting-period samples by location."""
 
-    paired: pd.DataFrame
+    paired: lazy_types.DataFrame
     """DataFrame with one row per paired location.
 
     Columns are ``{location_col}``, ``baseline_{col}`` and ``reporting_period_{col}`` for each

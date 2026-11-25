@@ -64,6 +64,7 @@ decides how to handle missing data.
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from functools import cache
 from typing import Literal, NamedTuple
 
 import numpy as np
@@ -81,11 +82,23 @@ from isometric_calculation_library.enhanced_weathering.utils.pairing import (
     require_complete_pairs,
 )
 from isometric_calculation_library.enhanced_weathering.utils.types import mass_fraction_column_name
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.elements import ElementSymbol
 from isometric_calculation_library.utils.types import Np1DArray
 
-_Z_ALPHA = float(norm.ppf(1 - 0.05 / 2))  # 1.96 for two-sided alpha = 0.05
-_Z_BETA = float(norm.ppf(0.80))  # 0.84 for power = 0.80
+
+# Functions rather than module-level constants, so that importing this module doesn't load scipy
+@cache
+def _z_alpha() -> float:
+    """1.96 for two-sided alpha = 0.05."""
+    return float(norm.ppf(1 - 0.05 / 2))
+
+
+@cache
+def _z_beta() -> float:
+    """0.84 for power = 0.80."""
+    return float(norm.ppf(0.80))
+
 
 type _VarianceKind = Literal["paired", "unpaired"]
 
@@ -97,8 +110,8 @@ class _ElementValues(NamedTuple):
     is why only the paired variant may difference them.
     """
 
-    baseline: Np1DArray[np.floating]
-    reporting_period: Np1DArray[np.floating]
+    baseline: lazy_types.NpFloating1DArray
+    reporting_period: lazy_types.NpFloating1DArray
 
 
 @dataclass(frozen=True)
@@ -410,7 +423,7 @@ def _compute_power_analysis(
                 variance_term = sigma_baseline**2 + sigma_reporting_period**2 / allocation_ratio
 
         if delta_mg_kg > 0:
-            n_required = (_Z_ALPHA + _Z_BETA) ** 2 * variance_term / (delta_mg_kg**2)
+            n_required = (_z_alpha() + _z_beta()) ** 2 * variance_term / (delta_mg_kg**2)
         else:
             n_required = float("inf")
 

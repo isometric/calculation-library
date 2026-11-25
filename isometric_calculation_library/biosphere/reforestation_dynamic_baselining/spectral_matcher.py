@@ -6,7 +6,7 @@ import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import NamedTuple
 
 import geopandas as gpd
 import numpy as np
@@ -19,10 +19,8 @@ from rasterio.features import rasterize
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray, Np2DArray
-
-if TYPE_CHECKING:
-    from rasterio.transform import Affine
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +56,7 @@ class CrsDetermination:
 class MasterGrid:
     """Master grid parameters derived from the donor zone bounds."""
 
-    transform: "Affine"
+    transform: lazy_types.RasterioAffine
     width: int
     height: int
 
@@ -67,9 +65,9 @@ class MasterGrid:
 class ProcessedRasterStacks:
     """Raster band stacks sampled onto the master grid for both zones."""
 
-    large_grid_stack: np.ndarray
+    large_grid_stack: lazy_types.NpArray
     """Shape (num_rasters, master_height, master_width), covering the donor zone."""
-    smaller_zone_stack: np.ndarray
+    smaller_zone_stack: lazy_types.NpArray
     """Shape (num_rasters, master_height, master_width), covering the project boundary."""
     raster_names: tuple[str, ...]
 
@@ -78,17 +76,17 @@ class ProcessedRasterStacks:
 class PreparedZoneData:
     """Flattened, normalized, valid-pixel data for one zone, ready for k-NN matching."""
 
-    normalized_data: Np2DArray[np.floating]
-    valid_indices: Np1DArray[np.integer]
-    scaler: StandardScaler
+    normalized_data: lazy_types.NpFloating2DArray
+    valid_indices: lazy_types.NpInteger1DArray
+    scaler: lazy_types.SklearnStandardScaler
 
 
 @dataclass(frozen=True)
 class NearestNeighborsMatch:
     """Nearest-neighbor distances and indices from a k-NN query."""
 
-    distances: Np2DArray[np.floating]
-    indices: Np2DArray[np.integer]
+    distances: lazy_types.NpFloating2DArray
+    indices: lazy_types.NpInteger2DArray
 
 
 @dataclass(frozen=True)
@@ -96,7 +94,7 @@ class DynamicMatchingResult:
     """Full result of the dynamic matching workflow."""
 
     match_details: Sequence[PixelMatchResult]
-    scaler: StandardScaler
+    scaler: lazy_types.SklearnStandardScaler
 
 
 class SpectralMatcher:
@@ -249,7 +247,7 @@ class SpectralMatcher:
         self,
         source_raster_path: str,
         clip_boundary: gpd.GeoDataFrame,
-        resampling_method: Resampling = Resampling.bilinear,
+        resampling_method: Resampling | None = None,
     ) -> Np2DArray[np.floating]:
         """Clips and reprojects a source raster to match the master grid."""
         with rasterio.open(source_raster_path) as source_dataset:
@@ -276,7 +274,9 @@ class SpectralMatcher:
                 src_crs=source_dataset.crs,
                 dst_transform=self.master_transform,
                 dst_crs=self.working_crs,
-                resampling=resampling_method,
+                # Bilinear by default, resolved here rather than as a default argument, so that
+                # importing this module doesn't load rasterio
+                resampling=Resampling.bilinear if resampling_method is None else resampling_method,
                 src_nodata=source_dataset.nodata,
                 dst_nodata=np.nan,
             )

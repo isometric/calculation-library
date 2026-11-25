@@ -10,6 +10,7 @@ import numpy as np
 
 from isometric_calculation_library.biosphere.allometric_equations.chave import ChaveModel
 from isometric_calculation_library.biosphere.constants import CO2_TO_CARBON_RATIO, M2_PER_HECTARE
+from isometric_calculation_library.utils import lazy_types
 from isometric_calculation_library.utils.types import Np1DArray
 
 
@@ -20,11 +21,11 @@ class TreeMeasurements:
     All arrays are 1-D with length equal to the number of trees.
     """
 
-    dbh_cm: Np1DArray[np.floating]
-    height_m: Np1DArray[np.floating]
-    wood_density_g_cm3: Np1DArray[np.floating]
-    wood_density_sd_g_cm3: Np1DArray[np.floating]
-    height_logsd: Np1DArray[np.floating]
+    dbh_cm: lazy_types.NpFloating1DArray
+    height_m: lazy_types.NpFloating1DArray
+    wood_density_g_cm3: lazy_types.NpFloating1DArray
+    wood_density_sd_g_cm3: lazy_types.NpFloating1DArray
+    height_logsd: lazy_types.NpFloating1DArray
 
 
 @dataclass(frozen=True)

@@ -2,6 +2,17 @@
 
 All releases are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
+## [0.57.10](https://github.com/isometric/calculation-library/releases/tag/v0.57.10)
+
+### Added
+
+- `utils.lazy_types`: `type` aliases of pandas, numpy, rasterio and scikit-learn types, for field annotations that must not load these libraries when their module is imported with lazy imports (PEP 810). Without lazy imports, importing `utils.lazy_types` loads all four libraries.
+
+### Changed
+
+- With lazy imports (PEP 810), importing the library's modules no longer loads pandas, numpy, scipy, scikit-learn or rasterio. Field annotations of NamedTuples, TypedDicts and dataclasses name aliases from `utils.lazy_types`, and module-level values, such as the normal quantiles in `enhanced_weathering.utils.statistical_checks.power_analysis`, are computed on first use. Results are unchanged.
+- `biosphere.reforestation_dynamic_baselining.spectral_matcher.SpectralMatcher`: `process_raster_to_grid`'s `resampling_method` parameter defaults to `None`, which means bilinear resampling.
+
 ## [0.57.9](https://github.com/isometric/calculation-library/releases/tag/v0.57.9)
 
 Dependency version update.

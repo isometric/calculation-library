@@ -26,6 +26,7 @@ from isometric_calculation_library.biosphere.allometric_equations.westfall_nsvb.
 from isometric_calculation_library.biosphere.allometric_equations.westfall_nsvb.tables import (
     load_table,
 )
+from isometric_calculation_library.utils import lazy_types
 
 _WOODLAND_JENKINS_SPECIES_GROUP_CODE = 10
 """Jenkins group of woodland junipers and pinyons, which NSVB models outside this framework."""
@@ -63,7 +64,7 @@ def _sigma(component: str, species_code: int) -> float:
 class _SelectedCoefficients(NamedTuple):
     """One row of a component coefficient table, and how specific that row is."""
 
-    row: pd.Series
+    row: lazy_types.Series
     level: NsvbCoefficientLevel
 
 

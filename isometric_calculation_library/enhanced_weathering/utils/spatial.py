@@ -10,6 +10,8 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
+from isometric_calculation_library.utils import lazy_types
+
 PlotType = Literal["control", "treatment", "deployment"]
 
 PLOT_TYPE_COLUMN = "plot_type"
@@ -72,7 +74,7 @@ def resolve_plot_columns(
 class SplitByPlotTypeResult(NamedTuple):
     """Result of assigning samples to plot types and splitting by type."""
 
-    splits: Mapping[PlotType, tuple[pd.DataFrame, pd.DataFrame]]
+    splits: Mapping[PlotType, tuple[lazy_types.DataFrame, lazy_types.DataFrame]]
     """Per-plot-type ``(baseline, reporting_period)`` DataFrames."""
 
     n_baseline_unassigned: int
